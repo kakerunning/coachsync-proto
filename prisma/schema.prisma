@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ATHLETE
+  COACH
+}
+
+model User {
+  id        String         @id @default(cuid())
+  email     String         @unique
+  name      String
+  role      Role
+  coachId   String?
+  coach     User?          @relation("CoachAthletes", fields: [coachId], references: [id])
+  athletes  User[]         @relation("CoachAthletes")
+  reports   WeeklyReport[]
+  comments  Comment[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+}
+
+model WeeklyReport {
+  id           String            @id @default(cuid())
+  athleteId    String
+  weekStart    DateTime
+  reflection   String
+  reflectionDe String?
+  submittedAt  DateTime?
+  athlete      User              @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  sessions     TrainingSession[]
+  comments     Comment[]
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@unique([athleteId, weekStart])
+  @@index([athleteId, submittedAt])
+}
+
+model TrainingSession {
+  id         String          @id @default(cuid())
+  reportId   String
+  date       DateTime
+  menuText   String
+  menuTextDe String?
+  report     WeeklyReport    @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  results    SessionResult[]
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+
+  @@index([reportId, date])
+}
+
+model SessionResult {
+  id           String          @id @default(cuid())
+  sessionId    String
+  setIndex     Int
+  segmentIndex Int
+  distanceM    Int?
+  timeSec      Float?
+  isDnf        Boolean         @default(false)
+  note         String?
+  session      TrainingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@unique([sessionId, setIndex, segmentIndex])
+  @@index([distanceM])
+}
+
+model Comment {
+  id        String       @id @default(cuid())
+  reportId  String
+  authorId  String
+  body      String
+  bodyJa    String?
+  report    WeeklyReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  author    User         @relation(fields: [authorId], references: [id])
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@index([reportId, createdAt])
+}
