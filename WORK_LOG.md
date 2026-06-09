@@ -190,6 +190,70 @@ npx prisma studio
 
 ---
 
+---
+
+## Step 3b: SessionResult 入力UI
+
+### ステータス: 実装完了 (Kakeru の動作確認待ち)
+
+---
+
+### 実装したファイルのリスト
+
+| ファイル | 内容 |
+|---|---|
+| `src/app/api/sessions/[id]/results/route.ts` | POST Result 1件追加 (認証・認可・@@unique 重複時 409) |
+| `src/app/api/results/[id]/route.ts` | PATCH Result 更新 + DELETE Result 削除 |
+| `src/app/api/reports/[id]/route.ts` | GET に `sessions.results` include 追加 (setIndex/segmentIndex 順) |
+| `src/app/athlete/reports/[id]/page.tsx` | Prisma query に results include 追加 + ReportEditor に results を渡す |
+| `src/app/athlete/reports/[id]/ReportEditor.tsx` | Results セクション追加 (Set グループ表示・追加/削除, Segment 追加/削除, 自動保存, DNF即時保存) |
+| `src/app/athlete/reports/[id]/view/page.tsx` | Prisma query に results include 追加 + read-only テーブル表示 |
+
+---
+
+### 動作確認手順
+
+1. アスリートアカウントでログイン → 既存レポートの編集画面を開く (セッションが1つ以上あること)
+2. セッションカード下部の「+ Set を追加」ボタンを押す → Set 1 の行 (Seg 1) が表示される
+3. 距離欄に `500`、タイム欄に `88.7`、Note に `mit Hürden` を入力 → 800ms 後に「保存しました」 (Network タブで PATCH /api/results/[id] を確認)
+4. 「+ Segment を追加」を押す → 同じ Set 1 に Seg 2 が追加される
+5. 「+ Set を追加」を押す → Set 2 が新規追加される
+6. 任意の行の DNF チェックボックスをオン → タイム欄が disabled になり、即時 PATCH が飛ぶ
+7. 任意の行のゴミ箱アイコンを押す → 行が消える
+8. ページをリロード → 全データが復元される
+9. Joachim 2/26 サンプルを全件入力 (下記) → ページリロードで復元確認
+10. 閲覧画面 (`/athlete/reports/[id]/view`) で Results がテーブル形式で read-only 表示されることを確認
+11. Prisma Studio で `SessionResult` テーブルを確認 → setIndex / segmentIndex / distanceM / timeSec / isDnf / note が正しく入っていることを確認
+12. 別のアスリートアカウントで他人の result ID に PATCH → 404 になることを確認
+
+---
+
+### Joachim 2/26 テストデータ
+
+日付: 2025-02-26 / menuText: `2× (500m/400m/300m/200m)`
+
+| Set | Seg | Distance | Time | Note |
+|-----|-----|----------|------|------|
+| 1 | 1 | 500m | 88.7s | mit Hürden |
+| 1 | 2 | 400m | 63.6s | mit Hürden |
+| 1 | 3 | 300m | 51.0s | |
+| 1 | 4 | 200m | (空欄) | Zeit verloren |
+| 2 | 1 | 500m | 88.8s | |
+| 2 | 2 | 400m | 73.2s | |
+| 2 | 3 | 300m | 53.5s | |
+| 2 | 4 | 200m | 29.4s | |
+
+---
+
+### 既知の制約・TODO
+
+- Set 全体の削除ボタンは実装していない (仕様通り)
+- インデックスの詰め直しは行わない (歯抜け許容、仕様通り)
+- menuTextDe (DeepL翻訳) は Step 4 で実装
+- スクリーンショットは Kakeru が動作確認時に取得してください
+
+---
+
 ## Step 0: プロジェクト初期化 + DB接続確認 ✅ 完了
 
 - next@16.2.7, prisma@7.8.0, @prisma/adapter-pg, pg インストール済み

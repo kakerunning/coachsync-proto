@@ -21,7 +21,14 @@ export default async function ReportEditPage({ params }: PageProps) {
   const { id } = await params;
   const report = await prisma.weeklyReport.findUnique({
     where: { id },
-    include: { sessions: { orderBy: { date: "asc" } } },
+    include: {
+      sessions: {
+        orderBy: { date: "asc" },
+        include: {
+          results: { orderBy: [{ setIndex: "asc" }, { segmentIndex: "asc" }] },
+        },
+      },
+    },
   });
 
   // 他人のレポートには 404
@@ -58,6 +65,15 @@ export default async function ReportEditPage({ params }: PageProps) {
           id: s.id,
           date: s.date.toISOString().substring(0, 10),
           menuText: s.menuText,
+          results: s.results.map((r) => ({
+            id: r.id,
+            setIndex: r.setIndex,
+            segmentIndex: r.segmentIndex,
+            distanceM: r.distanceM,
+            timeSec: r.timeSec,
+            isDnf: r.isDnf,
+            note: r.note,
+          })),
         }))}
       />
     </main>

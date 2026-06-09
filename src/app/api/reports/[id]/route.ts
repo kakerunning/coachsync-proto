@@ -23,7 +23,14 @@ export async function GET(
   const { id } = await params;
   const report = await prisma.weeklyReport.findUnique({
     where: { id },
-    include: { sessions: { orderBy: { date: "asc" } } },
+    include: {
+      sessions: {
+        orderBy: { date: "asc" },
+        include: {
+          results: { orderBy: [{ setIndex: "asc" }, { segmentIndex: "asc" }] },
+        },
+      },
+    },
   });
   if (!report || report.athleteId !== user.id) return notFound();
 

@@ -20,7 +20,14 @@ export default async function ReportViewPage({ params }: PageProps) {
   const { id } = await params;
   const report = await prisma.weeklyReport.findUnique({
     where: { id },
-    include: { sessions: { orderBy: { date: "asc" } } },
+    include: {
+      sessions: {
+        orderBy: { date: "asc" },
+        include: {
+          results: { orderBy: [{ setIndex: "asc" }, { segmentIndex: "asc" }] },
+        },
+      },
+    },
   });
 
   if (!report || report.athleteId !== dbUser.id) notFound();
@@ -51,18 +58,69 @@ export default async function ReportViewPage({ params }: PageProps) {
         {report.sessions.length > 0 && (
           <div className="space-y-4">
             <h2 className="text-sm font-medium">Training Sessions</h2>
-            {report.sessions.map((session) => (
-              <div key={session.id} className="rounded-xl border p-4 space-y-2">
-                <h3 className="font-medium text-sm">
-                  {session.date.toISOString().substring(0, 10)}
-                </h3>
-                {session.menuText && (
-                  <pre className="whitespace-pre-wrap text-sm font-sans">
-                    {session.menuText}
-                  </pre>
-                )}
-              </div>
-            ))}
+            {report.sessions.map((session) => {
+              const setIndices = [
+                ...new Set(session.results.map((r) => r.setIndex)),
+              ].sort((a, b) => a - b);
+
+              return (
+                <div key={session.id} className="rounded-xl border p-4 space-y-3">
+                  <h3 className="font-medium text-sm">
+                    {session.date.toISOString().substring(0, 10)}
+                  </h3>
+                  {session.menuText && (
+                    <pre className="whitespace-pre-wrap text-sm font-sans">
+                      {session.menuText}
+                    </pre>
+                  )}
+                  {setIndices.length > 0 && (
+                    <div className="space-y-3 border-t pt-3">
+                      <p className="text-xs font-medium text-muted-foreground">Results</p>
+                      {setIndices.map((setIndex) => {
+                        const setResults = session.results
+                          .filter((r) => r.setIndex === setIndex)
+                          .sort((a, b) => a.segmentIndex - b.segmentIndex);
+                        return (
+                          <div key={setIndex} className="space-y-1">
+                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                              Set {setIndex}
+                            </p>
+                            <table className="w-full text-sm">
+                              <thead>
+                                <tr className="text-xs text-muted-foreground">
+                                  <th className="text-left font-normal py-0.5 pr-3">Seg</th>
+                                  <th className="text-right font-normal py-0.5 pr-3">Distance</th>
+                                  <th className="text-right font-normal py-0.5 pr-3">Time</th>
+                                  <th className="text-center font-normal py-0.5 pr-3">DNF</th>
+                                  <th className="text-left font-normal py-0.5">Note</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {setResults.map((r) => (
+                                  <tr key={r.id} className="border-t border-border/40">
+                                    <td className="py-0.5 pr-3">{r.segmentIndex}</td>
+                                    <td className="py-0.5 pr-3 text-right">
+                                      {r.distanceM != null ? `${r.distanceM} m` : "—"}
+                                    </td>
+                                    <td className="py-0.5 pr-3 text-right">
+                                      {r.isDnf ? "DNF" : r.timeSec != null ? `${r.timeSec} s` : "—"}
+                                    </td>
+                                    <td className="py-0.5 pr-3 text-center">
+                                      {r.isDnf ? "✓" : ""}
+                                    </td>
+                                    <td className="py-0.5 text-muted-foreground">{r.note ?? ""}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
 

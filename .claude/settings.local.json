@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --yes 2>&1)",
+      "Bash(npm install prisma@latest @prisma/client@latest @prisma/adapter-pg pg 2>&1 && npm install --save-dev @types/pg 2>&1)",
+      "Bash(npx prisma init --db-url \"postgresql://placeholder\" 2>&1)",
+      "Bash(npx prisma init --datasource-provider postgresql 2>&1)",
+      "Bash(npm install dotenv 2>&1)",
+      "Bash(npm list dotenv 2>&1)",
+      "Bash(node -e \"const pkg = require\\('./package.json'\\); console.log\\('next:', pkg.dependencies.next\\); console.log\\('prisma:', pkg.devDependencies?.prisma || pkg.dependencies.prisma\\); console.log\\('@prisma/adapter-pg:', pkg.dependencies['@prisma/adapter-pg']\\); console.log\\('pg:', pkg.dependencies.pg\\);\")",
+      "Bash(npx prisma migrate dev --name init 2>&1)",
+      "Bash(pkill -f \"prisma migrate\" 2>/dev/null; sleep 1; echo \"killed\")",
+      "Bash(timeout 30 npx prisma db pull 2>&1 || true)",
+      "Bash(timeout 30 npx prisma db push 2>&1 || true)",
+      "Bash(timeout 15 node -e \"\nconst { Client } = require\\('pg'\\);\nrequire\\('dotenv'\\).config\\(\\);\nconst client = new Client\\({ connectionString: process.env.DIRECT_URL }\\);\nclient.connect\\(\\)\n  .then\\(\\(\\) => { console.log\\('Connected via DIRECT_URL \\(5432\\)'\\); return client.query\\('SELECT 1'\\); }\\)\n  .then\\(\\(\\) => { console.log\\('Query OK'\\); client.end\\(\\); }\\)\n  .catch\\(e => { console.error\\('Error:', e.message\\); process.exit\\(1\\); }\\);\n\" 2>&1)",
+      "Bash(npx prisma generate 2>&1)",
+      "Bash(npm install @supabase/supabase-js @supabase/ssr 2>&1)",
+      "Bash(timeout 60 npx prisma migrate dev --name full-schema 2>&1)",
+      "Bash(timeout 90 npx prisma migrate dev --name full-schema 2>&1)",
+      "Bash(node -e \"require\\('@supabase/ssr'\\); console.log\\('OK'\\)\" 2>&1)",
+      "Bash(npx tsc --noEmit 2>&1)",
+      "Bash(node -e \"require\\('zod'\\)\" 2>&1 && echo \"zod OK\" || echo \"zod NOT installed\")",
+      "Bash(npm install class-variance-authority clsx tailwind-merge lucide-react 2>&1)",
+      "Bash(npx shadcn@latest init --help 2>&1)",
+      "Bash(npx shadcn@latest init --defaults 2>&1)",
+      "Bash(npx shadcn@latest add textarea card badge 2>&1)",
+      "Bash(npm run build 2>&1)",
+      "Bash(mkdir -p \"/home/eightcloud/coachsync-proto/src/app/api/sessions/[id]/results\" && mv \"/home/eightcloud/coachsync-proto/src/app/api/sessions/[sessionId]/results/route.ts\" \"/home/eightcloud/coachsync-proto/src/app/api/sessions/[id]/results/route.ts\" && rm -rf \"/home/eightcloud/coachsync-proto/src/app/api/sessions/[sessionId]\" && ls \"/home/eightcloud/coachsync-proto/src/app/api/sessions/[id]/\")",
+      "Bash(rm -rf /home/eightcloud/coachsync-proto/.next && npx tsc --noEmit 2>&1)"
+    ]
+  }
+}
