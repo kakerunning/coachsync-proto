@@ -254,8 +254,192 @@ npx prisma studio
 
 ---
 
+---
+
+## Step 5: コメント機能
+
+### ステータス: 実装完了 (Kakeru の動作確認待ち)
+
+---
+
+### 実装したファイルのリスト
+
+| ファイル | 内容 |
+|---|---|
+| `src/app/api/reports/[id]/comments/route.ts` | GET (一覧) + POST (作成・DeepL日本語訳) |
+| `src/app/api/comments/[id]/route.ts` | PATCH (編集・再翻訳) + DELETE (削除) |
+| `src/app/coach/athletes/[athleteId]/reports/[reportId]/CommentSection.tsx` | コメント入力・編集・削除 Client Component |
+| `src/app/coach/athletes/[athleteId]/reports/[reportId]/page.tsx` | comments include 追加 + CommentSection 組み込み |
+| `src/app/athlete/reports/[id]/view/page.tsx` | comments include 追加 + コメント一覧表示 (bodyJa 優先) |
+
+---
+
+### 動作確認手順
+
+1. コーチアカウントでログイン → アスリートのレポート閲覧画面を開く
+2. 下部の「コメント」セクションにドイツ語/英語でコメントを入力 → 「コメントを送信」
+3. ターミナルで `[deepl] 翻訳完了` ログが出ることを確認
+4. コメントが一覧に追加され、`[JA] ...` の日本語訳が表示されることを確認
+5. 「編集」ボタンを押してコメントを修正 → 保存 → 日本語訳が更新されることを確認
+6. 「削除」ボタンを押して確認ダイアログ → OK → コメントが消えることを確認
+7. アスリートアカウントでログイン → 同じレポートの閲覧画面 (`/athlete/reports/[id]/view`) を開く
+8. 「コーチからのコメント」セクションに日本語訳 (bodyJa) が表示されることを確認
+9. Prisma Studio で `Comment` テーブルに `body` / `bodyJa` が入っていることを確認
+
+---
+
+### 認可ルール
+
+| 操作 | アスリート | コーチ |
+|---|---|---|
+| コメント一覧取得 | ✅ 自分のレポートのみ | ✅ 担当アスリートのレポートのみ |
+| コメント作成 | ❌ | ✅ 担当アスリートのレポートのみ |
+| コメント編集/削除 | ❌ | ✅ 自分のコメントのみ |
+
+---
+
+### 既知の制約・TODO
+
+- アスリート側の view 画面では `bodyJa` が null の場合に原文 (body) をグレーで表示する
+- コーチ側では原文と `[JA]` 訳の両方を表示 (確認用)
+- スクリーンショットは Kakeru が動作確認時に取得してください
+
+---
+
+## Step 4: コーチ側閲覧 + DeepL翻訳
+
+### ステータス: 実装完了 (Kakeru の動作確認待ち)
+
+---
+
+### 実装したファイルのリスト
+
+| ファイル | 内容 |
+|---|---|
+| `src/lib/deepl.ts` | DeepL API 翻訳ユーティリティ (失敗時 null 返却) |
+| `src/app/api/reports/[id]/sessions/route.ts` | POST 時に menuText → menuTextDe 自動翻訳追加 |
+| `src/app/api/sessions/[id]/route.ts` | PATCH 時に menuText → menuTextDe 自動翻訳追加 |
+| `src/app/api/reports/[id]/submit/route.ts` | POST 時に reflection → reflectionDe 自動翻訳追加 |
+| `src/app/coach/page.tsx` | コーチダッシュボード (担当アスリート一覧 + 最新レポートリンク) |
+| `src/app/coach/athletes/[athleteId]/reports/[reportId]/page.tsx` | コーチ用レポート閲覧 Server Component (認可チェック付き) |
+| `src/app/coach/athletes/[athleteId]/reports/[reportId]/ReportViewer.tsx` | 原文/ドイツ語訳トグル付きレポート表示 Client Component |
+
+---
+
+### 動作確認手順
+
+1. **前提: コーチとアスリートを紐付ける**
+   - Prisma Studio (`npx prisma studio --port 5555`) を開く
+   - `User` テーブルで ATHLETE のレコードを選択
+   - `coachId` フィールドに COACH ユーザーの `id` を入力して保存
+
+2. **翻訳確認 (新規セッション)**
+   - アスリートアカウントでログイン → レポート編集画面を開く
+   - 「+ 日付を追加」でセッションを追加し menuText に日本語またはドイツ語を入力 → 1秒後に自動保存
+   - Prisma Studio の `TrainingSession` テーブルで `menuTextDe` にドイツ語が入っていることを確認
+
+3. **翻訳確認 (提出)**
+   - レポートのリフレクション欄に文章を入力 → 「提出する」→「はい」
+   - Prisma Studio の `WeeklyReport` テーブルで `reflectionDe` にドイツ語が入っていることを確認
+
+4. **コーチダッシュボード確認**
+   - コーチアカウントでログイン → `/coach` を開く
+   - 担当アスリートの名前と最新レポートが表示されることを確認
+   - 「レポートを見る →」リンクをクリック
+
+5. **コーチ用レポート閲覧確認**
+   - デフォルトで「Deutsch」ボタンが選択状態になっている
+   - `menuTextDe` / `reflectionDe` がドイツ語で表示されることを確認
+   - 「原文」ボタンを押すと元のテキストに切り替わることを確認
+   - 担当外アスリートのレポートURLに直接アクセス → 404 になることを確認
+
+---
+
+### 既知の制約・TODO
+
+- 既存セッション (Step 3 以前に作成したもの) は `menuTextDe` が null のまま → 閲覧画面に「(翻訳未生成)」と表示される。手動で menuText を再保存すると翻訳される
+- コーチが `coachId` を持っていない場合、ダッシュボードに「担当アスリートがまだいません」と表示される → Prisma Studio で手動設定が必要 (Step 5 以降で UI 追加予定)
+- スクリーンショットは Kakeru が動作確認時に取得してください
+
+---
+
+---
+
+## Step 6: 集計・可視化 ✅ 完了
+
+### ステータス: 動作確認済み・完了
+
+---
+
+### 実装したファイルのリスト
+
+| ファイル | 内容 |
+|---|---|
+| `src/app/athlete/stats/page.tsx` | アスリート統計ページ Server Component (認証・データ取得・期間フィルタ) |
+| `src/app/coach/athletes/[athleteId]/stats/page.tsx` | コーチ側統計ページ Server Component (担当アスリート確認付き) |
+| `src/components/StatsCharts.tsx` | Recharts グラフ Client Component (距離別タイム推移 + 週次ボリューム、両ロールで共有) |
+| `src/app/athlete/page.tsx` | ダッシュボードに「統計・グラフを見る →」リンク追加 |
+| `src/app/coach/page.tsx` | ダッシュボードの各アスリート行に「統計 →」リンク追加 |
+| `src/app/coach/athletes/[athleteId]/reports/[reportId]/page.tsx` | レポートページヘッダーに「統計を見る →」リンク追加 |
+
+---
+
+### 実装内容
+
+- **`/athlete/stats`** ページを新規作成
+- **期間フィルタ**: 過去4週 / 過去12週 / 全期間 (URL `?period=4w|12w|all`)
+- **距離別ベストタイム推移グラフ** (Recharts LineChart)
+  - X軸: 週開始日 (月/日)
+  - Y軸: タイム秒 (mm:ss 形式でフォーマット)
+  - 距離ごとに別の色のライン
+  - DNF・タイム未記録は除外し、各週の各距離ベストタイムをプロット
+- **週次走行距離グラフ** (Recharts BarChart)
+  - X軸: 週開始日
+  - Y軸: 合計距離 (m)
+  - DNF含む全結果の distanceM を週ごとに合計
+- データが0件の場合は「データがありません」メッセージを表示
+
+---
+
+### 動作確認手順
+
+**前提: SessionResult にタイム付きデータが複数週分入っていること**
+
+1. アスリートアカウントでログイン → `/athlete` ダッシュボードを開く
+2. 「統計・グラフを見る →」ボタンをクリック → `/athlete/stats` へ遷移することを確認
+3. デフォルト「過去4週」フィルタが選択状態であることを確認
+4. 距離別ベストタイム推移グラフに距離ごとの折れ線が表示されることを確認
+5. 週次走行距離グラフに棒グラフが表示されることを確認
+6. 「過去12週」「全期間」ボタンをクリックして表示が切り替わることを確認
+7. グラフの各データポイントにホバーしてツールチップが表示されることを確認
+8. 「← ダッシュボード」リンクで `/athlete` に戻れることを確認
+9. データがない期間を選択した場合「データがありません」メッセージが表示されることを確認
+
+---
+
+### 既知の制約・TODO
+
+- 期間フィルタはページ全体の再レンダリング (URL ベース) のためチャート切替に若干の遅延あり
+- スクリーンショットは Kakeru が動作確認時に取得してください
+
+---
+
 ## Step 0: プロジェクト初期化 + DB接続確認 ✅ 完了
 
 - next@16.2.7, prisma@7.8.0, @prisma/adapter-pg, pg インストール済み
 - User テーブルの migration + Prisma Studio 確認済み
 - Session Pooler (5432) を DATABASE_URL として使用 (Transaction Pooler 6543 は Prisma CLI でハング)
+
+---
+
+## Prisma Studio メモ
+
+Prisma Studio はデフォルトで起動のたびにポートをランダムに選ぶため、前回と異なるポートになることがある。
+
+**固定ポートで起動する方法:**
+
+```bash
+npx prisma studio --port 5555
+```
+
+常に `http://localhost:5555` で開けるようになる。

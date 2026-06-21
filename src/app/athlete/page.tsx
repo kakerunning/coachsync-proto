@@ -69,6 +69,12 @@ export default async function AthleteDashboard() {
         Welcome, {dbUser.name} ({dbUser.role})
       </p>
 
+      <div className="mb-6">
+        <Link href="/athlete/stats">
+          <Button variant="outline" size="sm">統計・グラフを見る →</Button>
+        </Link>
+      </div>
+
       {/* 今週のレポート */}
       <Card className="mb-6">
         <CardHeader>
@@ -87,8 +93,8 @@ export default async function AthleteDashboard() {
                   <Badge variant="secondary">下書き</Badge>
                 )}
               </div>
-              <Link href={`/athlete/reports/${thisWeekReport.id}`}>
-                <Button size="sm">編集を続ける</Button>
+              <Link href={`/athlete/reports/${thisWeekReport.id}/view`}>
+                <Button size="sm">開く</Button>
               </Link>
             </div>
           ) : (
@@ -124,7 +130,7 @@ export default async function AthleteDashboard() {
                       <Badge variant="secondary">下書き</Badge>
                     )}
                   </div>
-                  <Link href={`/athlete/reports/${r.id}`}>
+                  <Link href={`/athlete/reports/${r.id}/view`}>
                     <Button variant="outline" size="sm">
                       開く
                     </Button>

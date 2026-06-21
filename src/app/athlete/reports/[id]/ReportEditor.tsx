@@ -336,6 +336,18 @@ export function ReportEditor({
   async function handleSubmitConfirmed() {
     setConfirmingSubmit(false);
     setSubmitError(null);
+
+    // debounce 中のリフレクション保存があれば先に完了させる
+    if (reflectionDebounceRef.current) {
+      clearTimeout(reflectionDebounceRef.current);
+      reflectionDebounceRef.current = null;
+      await fetch(`/api/reports/${reportId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reflection }),
+      });
+    }
+
     try {
       const res = await fetch(`/api/reports/${reportId}/submit`, {
         method: "POST",
@@ -560,11 +572,7 @@ export function ReportEditor({
       {/* 提出ボタン */}
       <div className="space-y-2">
         <div className="flex items-center gap-3">
-          {submittedAt ? (
-            <Button disabled variant="secondary">
-              提出済み
-            </Button>
-          ) : confirmingSubmit ? (
+          {confirmingSubmit ? (
             <>
               <span className="text-sm font-medium">本当に提出しますか?</span>
               <Button size="sm" onClick={handleSubmitConfirmed}>
@@ -579,9 +587,18 @@ export function ReportEditor({
               </Button>
             </>
           ) : (
-            <Button onClick={() => setConfirmingSubmit(true)}>提出する</Button>
+            <>
+              <Button onClick={() => setConfirmingSubmit(true)}>
+                {submittedAt ? "再提出する" : "提出する"}
+              </Button>
+              {submittedAt && (
+                <span className="text-xs text-green-600">
+                  提出済み ({new Date(submittedAt).toLocaleDateString("ja-JP")})
+                </span>
+              )}
+            </>
           )}
-          {!submittedAt && !confirmingSubmit && (
+          {!confirmingSubmit && (
             <span className="text-xs text-muted-foreground">
               提出後も編集できます
             </span>

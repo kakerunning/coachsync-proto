@@ -26,7 +26,14 @@
       "Bash(npx shadcn@latest add textarea card badge 2>&1)",
       "Bash(npm run build 2>&1)",
       "Bash(mkdir -p \"/home/eightcloud/coachsync-proto/src/app/api/sessions/[id]/results\" && mv \"/home/eightcloud/coachsync-proto/src/app/api/sessions/[sessionId]/results/route.ts\" \"/home/eightcloud/coachsync-proto/src/app/api/sessions/[id]/results/route.ts\" && rm -rf \"/home/eightcloud/coachsync-proto/src/app/api/sessions/[sessionId]\" && ls \"/home/eightcloud/coachsync-proto/src/app/api/sessions/[id]/\")",
-      "Bash(rm -rf /home/eightcloud/coachsync-proto/.next && npx tsc --noEmit 2>&1)"
+      "Bash(rm -rf /home/eightcloud/coachsync-proto/.next && npx tsc --noEmit 2>&1)",
+      "Bash(git status && git push 2>&1)",
+      "Bash(source .env && psql \"$DATABASE_URL\" -c \"ALTER TABLE _prisma_migrations ENABLE ROW LEVEL SECURITY;\" 2>&1)",
+      "Bash(which node && node -e \"\nconst { Client } = require\\('pg'\\);\nrequire\\('dotenv/config'\\);\nconst client = new Client\\({ connectionString: process.env.DATABASE_URL }\\);\nclient.connect\\(\\)\n  .then\\(\\(\\) => client.query\\('ALTER TABLE _prisma_migrations ENABLE ROW LEVEL SECURITY;'\\)\\)\n  .then\\(\\(\\) => { console.log\\('RLS enabled on _prisma_migrations'\\); client.end\\(\\); }\\)\n  .catch\\(e => { console.error\\(e.message\\); client.end\\(\\); }\\);\n\" 2>&1)",
+      "Bash(lsof -i :49152 2>/dev/null | head -5; ps aux | grep prisma | grep -v grep)",
+      "Bash(ls -la /home/eightcloud/coachsync-proto/.env* 2>/dev/null)",
+      "Bash(npm install recharts --legacy-peer-deps 2>&1 | tail -5)",
+      "Bash(npm list recharts 2>&1)"
     ]
   }
 }

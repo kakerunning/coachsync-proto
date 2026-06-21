@@ -27,6 +27,10 @@ export default async function ReportViewPage({ params }: PageProps) {
           results: { orderBy: [{ setIndex: "asc" }, { segmentIndex: "asc" }] },
         },
       },
+      comments: {
+        include: { author: { select: { name: true } } },
+        orderBy: { createdAt: "asc" },
+      },
     },
   });
 
@@ -133,6 +137,32 @@ export default async function ReportViewPage({ params }: PageProps) {
             </pre>
           ) : (
             <p className="text-sm text-muted-foreground">未記入</p>
+          )}
+        </div>
+
+        {/* コーチからのコメント */}
+        <div className="space-y-3 border-t pt-4">
+          <h2 className="text-sm font-medium">コーチからのコメント</h2>
+          {report.comments.length === 0 ? (
+            <p className="text-sm text-muted-foreground">まだコメントはありません</p>
+          ) : (
+            <ul className="space-y-3">
+              {report.comments.map((comment) => (
+                <li key={comment.id} className="rounded-xl border p-3 space-y-1">
+                  {comment.bodyJa ? (
+                    <p className="text-sm whitespace-pre-wrap">{comment.bodyJa}</p>
+                  ) : (
+                    <p className="text-sm whitespace-pre-wrap text-muted-foreground">
+                      {comment.body}
+                    </p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    {comment.author.name} ·{" "}
+                    {new Date(comment.createdAt).toLocaleDateString("ja-JP")}
+                  </p>
+                </li>
+              ))}
+            </ul>
           )}
         </div>
       </div>

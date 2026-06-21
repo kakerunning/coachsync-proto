@@ -7,6 +7,7 @@ import {
   notFound,
   badRequest,
 } from "@/lib/api-auth";
+import { translate } from "@/lib/deepl";
 
 const CreateSessionSchema = z.object({
   date: z.string(),
@@ -40,11 +41,15 @@ export async function POST(
     return badRequest("date is out of week range");
   }
 
+  const menuText = parsed.data.menuText;
+  const menuTextDe = menuText ? await translate(menuText, "DE") : null;
+
   const session = await prisma.trainingSession.create({
     data: {
       reportId: id,
       date,
-      menuText: parsed.data.menuText,
+      menuText,
+      ...(menuTextDe !== null && { menuTextDe }),
     },
   });
 

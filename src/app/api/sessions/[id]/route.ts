@@ -7,6 +7,7 @@ import {
   notFound,
   badRequest,
 } from "@/lib/api-auth";
+import { translate } from "@/lib/deepl";
 
 const UpdateSessionSchema = z.object({
   date: z.string().optional(),
@@ -56,6 +57,8 @@ export async function PATCH(
 
   if (parsed.data.menuText !== undefined) {
     data.menuText = parsed.data.menuText;
+    const menuTextDe = await translate(parsed.data.menuText, "DE");
+    if (menuTextDe !== null) (data as Record<string, unknown>).menuTextDe = menuTextDe;
   }
 
   const updated = await prisma.trainingSession.update({
