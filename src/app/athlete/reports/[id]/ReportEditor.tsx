@@ -3,8 +3,6 @@
 import { useRef, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Trash2 } from "lucide-react";
 
 type SaveStatus = "idle" | "saving" | "saved";
@@ -48,6 +46,32 @@ function dataToResult(data: unknown): ResultData {
   };
 }
 
+function SectionHeader({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-3">
+      <h2 className="text-xs font-semibold uppercase tracking-widest text-zinc-400 whitespace-nowrap">
+        {children}
+      </h2>
+      <div className="flex-1 border-t border-zinc-200" />
+    </div>
+  );
+}
+
+function StatusBadge({ submitted }: { submitted: boolean }) {
+  return submitted ? (
+    <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
+      提出済み
+    </span>
+  ) : (
+    <span className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20">
+      下書き
+    </span>
+  );
+}
+
+const inputCls =
+  "h-8 w-full rounded-md border border-zinc-200 bg-transparent px-2 text-sm outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/30 transition";
+
 export function ReportEditor({
   reportId,
   initialReflection,
@@ -69,7 +93,6 @@ export function ReportEditor({
   const sessionDebounceRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const resultDebounceRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
-  // 週の min/max 日付 (YYYY-MM-DD)
   const weekMinDate = weekStart.substring(0, 10);
   const weekMaxDate = (() => {
     const d = new Date(weekStart);
@@ -337,7 +360,6 @@ export function ReportEditor({
     setConfirmingSubmit(false);
     setSubmitError(null);
 
-    // debounce 中のリフレクション保存があれば先に完了させる
     if (reflectionDebounceRef.current) {
       clearTimeout(reflectionDebounceRef.current);
       reflectionDebounceRef.current = null;
@@ -367,26 +389,22 @@ export function ReportEditor({
   const allDaysUsed = sessions.length >= 7;
 
   return (
-    <div className="space-y-6">
-      {/* ヘッダー */}
+    <div className="space-y-8">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <h1 className="text-xl font-bold">週次レポート {weekLabel}</h1>
-          {submittedAt ? (
-            <Badge>提出済み</Badge>
-          ) : (
-            <Badge variant="secondary">下書き</Badge>
-          )}
+          <h1 className="text-xl font-bold text-zinc-900">週次レポート {weekLabel}</h1>
+          <StatusBadge submitted={!!submittedAt} />
         </div>
-        <span className="text-sm text-muted-foreground h-5">
+        <span className="text-sm text-zinc-400 min-w-[80px] text-right">
           {saveStatus === "saving" && "保存中..."}
-          {saveStatus === "saved" && "保存しました"}
+          {saveStatus === "saved" && "✓ 保存済み"}
         </span>
       </div>
 
-      {/* Training Sessions セクション */}
-      <div className="space-y-3">
-        <h2 className="text-sm font-medium">Training Sessions</h2>
+      {/* Training Sessions */}
+      <section className="space-y-4">
+        <SectionHeader>Training Sessions</SectionHeader>
 
         {sessions.map((session) => {
           const setIndices = [
@@ -394,157 +412,185 @@ export function ReportEditor({
           ].sort((a, b) => a - b);
 
           return (
-            <Card key={session.id}>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <input
-                    type="date"
-                    value={session.date}
-                    min={weekMinDate}
-                    max={weekMaxDate}
-                    onChange={(e) =>
-                      handleSessionChange(session.id, "date", e.target.value)
-                    }
-                    className="rounded border border-input bg-transparent px-2 py-1 text-sm outline-none focus:border-ring"
-                  />
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDeleteSession(session.id)}
-                    className="text-destructive hover:text-destructive"
-                  >
-                    削除
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
+            <div
+              key={session.id}
+              className="rounded-xl border border-zinc-200 bg-white shadow-sm overflow-hidden"
+            >
+              {/* Session header */}
+              <div className="flex items-center justify-between px-4 py-2.5 bg-zinc-50 border-b border-zinc-100">
+                <input
+                  type="date"
+                  value={session.date}
+                  min={weekMinDate}
+                  max={weekMaxDate}
+                  onChange={(e) =>
+                    handleSessionChange(session.id, "date", e.target.value)
+                  }
+                  className="text-sm font-medium bg-transparent outline-none cursor-pointer text-zinc-800"
+                />
+                <button
+                  onClick={() => handleDeleteSession(session.id)}
+                  className="text-zinc-400 hover:text-red-500 transition-colors p-1 rounded"
+                  aria-label="セッションを削除"
+                >
+                  <Trash2 size={15} />
+                </button>
+              </div>
+
+              {/* Menu text */}
+              <div className="px-4 pt-3 pb-3 space-y-1.5">
+                <label className="text-xs font-semibold uppercase tracking-widest text-zinc-400">
+                  Menu
+                </label>
                 <Textarea
                   value={session.menuText}
                   onChange={(e) =>
                     handleSessionChange(session.id, "menuText", e.target.value)
                   }
-                  rows={4}
+                  rows={3}
                   placeholder="メニューを入力 (例: 2× (200m–200m–400m))"
+                  className="resize-none text-sm"
                 />
+              </div>
 
-                {/* Results セクション */}
-                <div className="space-y-3 border-t pt-3">
-                  <h3 className="text-sm font-medium">Results</h3>
+              {/* Results */}
+              <div className="border-t border-zinc-100 px-4 py-3 space-y-4">
+                <p className="text-xs font-semibold uppercase tracking-widest text-zinc-400">
+                  Results
+                </p>
 
-                  {setIndices.map((setIndex) => {
-                    const setResults = session.results
-                      .filter((r) => r.setIndex === setIndex)
-                      .sort((a, b) => a.segmentIndex - b.segmentIndex);
+                {setIndices.map((setIndex) => {
+                  const setResults = session.results
+                    .filter((r) => r.setIndex === setIndex)
+                    .sort((a, b) => a.segmentIndex - b.segmentIndex);
 
-                    return (
-                      <div key={setIndex} className="space-y-1.5">
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                          Set {setIndex}
-                        </p>
-                        {setResults.map((result) => (
-                          <div
-                            key={result.id}
-                            className="flex flex-wrap items-center gap-2"
-                          >
-                            <span className="text-xs text-muted-foreground w-16 shrink-0">
-                              Seg {result.segmentIndex}
-                            </span>
-                            <input
-                              type="number"
-                              min="0"
-                              step="1"
-                              value={result.distanceM ?? ""}
-                              onChange={(e) =>
-                                handleResultChange(
-                                  session.id,
-                                  result.id,
-                                  "distanceM",
-                                  e.target.value
-                                )
-                              }
-                              placeholder="距離"
-                              className="w-20 rounded border border-input bg-transparent px-2 py-1 text-sm outline-none focus:border-ring"
-                            />
-                            <span className="text-xs text-muted-foreground">m</span>
-                            <input
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              value={result.timeSec ?? ""}
-                              onChange={(e) =>
-                                handleResultChange(
-                                  session.id,
-                                  result.id,
-                                  "timeSec",
-                                  e.target.value
-                                )
-                              }
-                              placeholder="タイム"
-                              disabled={result.isDnf}
-                              className="w-24 rounded border border-input bg-transparent px-2 py-1 text-sm outline-none focus:border-ring disabled:opacity-50"
-                            />
-                            <span className="text-xs text-muted-foreground">s</span>
-                            <label className="flex items-center gap-1 text-xs cursor-pointer">
+                  return (
+                    <div key={setIndex} className="space-y-1.5">
+                      <p className="text-xs font-semibold text-zinc-500">
+                        Set {setIndex}
+                      </p>
+
+                      {/* Scrollable results grid */}
+                      <div className="overflow-x-auto -mx-1 px-1">
+                        <div className="min-w-[460px] space-y-1">
+                          {/* Column headers */}
+                          <div className="grid grid-cols-[24px_76px_14px_80px_14px_56px_1fr_28px] gap-1.5 items-center px-0.5 mb-1">
+                            <span className="text-xs text-zinc-400">#</span>
+                            <span className="text-xs text-zinc-400">Dist</span>
+                            <span />
+                            <span className="text-xs text-zinc-400">Time</span>
+                            <span />
+                            <span className="text-xs text-zinc-400 text-center">DNF</span>
+                            <span className="text-xs text-zinc-400">Note</span>
+                            <span />
+                          </div>
+
+                          {setResults.map((result) => (
+                            <div
+                              key={result.id}
+                              className="grid grid-cols-[24px_76px_14px_80px_14px_56px_1fr_28px] gap-1.5 items-center"
+                            >
+                              <span className="text-xs text-zinc-500 text-center tabular-nums">
+                                {result.segmentIndex}
+                              </span>
                               <input
-                                type="checkbox"
-                                checked={result.isDnf}
+                                type="number"
+                                min="0"
+                                step="1"
+                                value={result.distanceM ?? ""}
                                 onChange={(e) =>
-                                  handleResultDnfChange(
+                                  handleResultChange(
                                     session.id,
                                     result.id,
-                                    e.target.checked
+                                    "distanceM",
+                                    e.target.value
                                   )
                                 }
+                                placeholder="—"
+                                className={inputCls}
                               />
-                              DNF
-                            </label>
-                            <input
-                              type="text"
-                              value={result.note ?? ""}
-                              onChange={(e) =>
-                                handleResultChange(
-                                  session.id,
-                                  result.id,
-                                  "note",
-                                  e.target.value
-                                )
-                              }
-                              placeholder="Note"
-                              className="flex-1 min-w-24 rounded border border-input bg-transparent px-2 py-1 text-sm outline-none focus:border-ring"
-                            />
-                            <button
-                              onClick={() =>
-                                handleDeleteResult(session.id, result.id)
-                              }
-                              className="text-destructive hover:text-destructive/80 p-1"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
-                        ))}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleAddSegment(session.id, setIndex)}
-                          className="text-xs h-7 pl-16"
-                        >
-                          + Segment を追加
-                        </Button>
+                              <span className="text-xs text-zinc-400">m</span>
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={result.timeSec ?? ""}
+                                onChange={(e) =>
+                                  handleResultChange(
+                                    session.id,
+                                    result.id,
+                                    "timeSec",
+                                    e.target.value
+                                  )
+                                }
+                                placeholder="—"
+                                disabled={result.isDnf}
+                                className={`${inputCls} disabled:opacity-40`}
+                              />
+                              <span className="text-xs text-zinc-400">s</span>
+                              <label className="flex items-center justify-center gap-1 text-xs cursor-pointer select-none text-zinc-600">
+                                <input
+                                  type="checkbox"
+                                  checked={result.isDnf}
+                                  onChange={(e) =>
+                                    handleResultDnfChange(
+                                      session.id,
+                                      result.id,
+                                      e.target.checked
+                                    )
+                                  }
+                                  className="rounded"
+                                />
+                                DNF
+                              </label>
+                              <input
+                                type="text"
+                                value={result.note ?? ""}
+                                onChange={(e) =>
+                                  handleResultChange(
+                                    session.id,
+                                    result.id,
+                                    "note",
+                                    e.target.value
+                                  )
+                                }
+                                placeholder="Note"
+                                className={inputCls}
+                              />
+                              <button
+                                onClick={() =>
+                                  handleDeleteResult(session.id, result.id)
+                                }
+                                className="flex items-center justify-center text-zinc-300 hover:text-red-400 transition-colors p-1"
+                                aria-label="削除"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    );
-                  })}
 
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleAddSet(session.id)}
-                    className="text-xs"
-                  >
-                    + Set を追加
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                      <button
+                        onClick={() => handleAddSegment(session.id, setIndex)}
+                        className="text-xs text-zinc-400 hover:text-primary transition-colors ml-6 py-0.5"
+                      >
+                        + Segment を追加
+                      </button>
+                    </div>
+                  );
+                })}
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleAddSet(session.id)}
+                  className="text-xs h-7"
+                >
+                  + Set を追加
+                </Button>
+              </div>
+            </div>
           );
         })}
 
@@ -552,14 +598,15 @@ export function ReportEditor({
           variant="outline"
           onClick={handleAddSession}
           disabled={allDaysUsed}
+          className="border-dashed w-full sm:w-auto"
         >
           + 日付を追加
         </Button>
-      </div>
+      </section>
 
-      {/* 週次リフレクション */}
-      <div className="space-y-2">
-        <label className="text-sm font-medium">週次リフレクション</label>
+      {/* Weekly Reflection */}
+      <section className="space-y-3">
+        <SectionHeader>週次リフレクション</SectionHeader>
         <Textarea
           value={reflection}
           onChange={(e) => handleReflectionChange(e.target.value)}
@@ -567,47 +614,46 @@ export function ReportEditor({
           placeholder="今週のトレーニングについて記入してください..."
           className="resize-none"
         />
-      </div>
+      </section>
 
-      {/* 提出ボタン */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-3">
-          {confirmingSubmit ? (
-            <>
-              <span className="text-sm font-medium">本当に提出しますか?</span>
+      {/* Submit */}
+      <section className="space-y-3 border-t border-zinc-200 pt-6 pb-8">
+        {confirmingSubmit ? (
+          <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+            <span className="text-sm font-medium text-amber-800">
+              提出しますか？
+            </span>
+            <div className="flex gap-2 ml-auto">
               <Button size="sm" onClick={handleSubmitConfirmed}>
-                はい
+                提出する
               </Button>
               <Button
                 size="sm"
                 variant="outline"
                 onClick={() => setConfirmingSubmit(false)}
               >
-                いいえ
+                キャンセル
               </Button>
-            </>
-          ) : (
-            <>
-              <Button onClick={() => setConfirmingSubmit(true)}>
-                {submittedAt ? "再提出する" : "提出する"}
-              </Button>
-              {submittedAt && (
-                <span className="text-xs text-green-600">
-                  提出済み ({new Date(submittedAt).toLocaleDateString("ja-JP")})
-                </span>
-              )}
-            </>
-          )}
-          {!confirmingSubmit && (
-            <span className="text-xs text-muted-foreground">
-              提出後も編集できます
-            </span>
-          )}
-        </div>
-        {submitError && (
-          <p className="text-sm text-destructive">{submitError}</p>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-3">
+            <Button onClick={() => setConfirmingSubmit(true)}>
+              {submittedAt ? "再提出する" : "提出する"}
+            </Button>
+            {submittedAt ? (
+              <span className="text-xs text-emerald-600 font-medium">
+                提出済み ({new Date(submittedAt).toLocaleDateString("ja-JP")})
+              </span>
+            ) : (
+              <span className="text-xs text-zinc-400">提出後も編集できます</span>
+            )}
+          </div>
         )}
-      </div>
+        {submitError && (
+          <p className="text-sm text-red-600">{submitError}</p>
+        )}
+      </section>
     </div>
   );
 }

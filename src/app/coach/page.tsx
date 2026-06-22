@@ -2,7 +2,19 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
-import { logout } from "@/lib/auth";
+import { AppNav } from "@/components/AppNav";
+
+function StatusBadge({ submitted }: { submitted: boolean }) {
+  return submitted ? (
+    <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
+      提出済み
+    </span>
+  ) : (
+    <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20">
+      下書き
+    </span>
+  );
+}
 
 export default async function CoachDashboard() {
   const supabase = await createClient();
@@ -16,7 +28,6 @@ export default async function CoachDashboard() {
 
   if (!dbUser || dbUser.role !== "COACH") redirect("/login");
 
-  // 担当アスリート一覧 + 各アスリートの最新レポート
   const athletes = await prisma.user.findMany({
     where: { coachId: dbUser.id },
     include: {
@@ -35,74 +46,96 @@ export default async function CoachDashboard() {
   });
 
   return (
-    <main className="min-h-screen p-8 max-w-3xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">コーチダッシュボード</h1>
-        <form action={logout}>
-          <button
-            type="submit"
-            className="text-sm text-gray-600 border border-gray-300 rounded px-3 py-1 hover:bg-gray-100"
-          >
-            ログアウト
-          </button>
-        </form>
-      </div>
+    <>
+      <AppNav name={dbUser.name} role="COACH" homeHref="/coach" />
+      <main className="min-h-screen bg-zinc-50">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-8">
 
-      <p className="text-gray-600 mb-6">
-        {dbUser.name} ({dbUser.role})
-      </p>
+          <section>
+            <p className="text-xs font-semibold uppercase tracking-widest text-zinc-400 mb-3">
+              担当アスリート
+            </p>
 
-      <h2 className="text-lg font-semibold mb-3">担当アスリート</h2>
+            {athletes.length === 0 ? (
+              <div className="bg-white rounded-xl border border-dashed border-zinc-300 p-8 text-center">
+                <p className="text-sm text-zinc-400">担当アスリートがまだいません</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {athletes.map((athlete) => {
+                  const latest = athlete.reports[0];
+                  const initials = athlete.name
+                    .split(/\s+/)
+                    .map((w) => w[0])
+                    .join("")
+                    .slice(0, 2)
+                    .toUpperCase();
 
-      {athletes.length === 0 ? (
-        <p className="text-gray-400 text-sm">担当アスリートがまだいません。</p>
-      ) : (
-        <ul className="space-y-3">
-          {athletes.map((athlete) => {
-            const latest = athlete.reports[0];
-            return (
-              <li
-                key={athlete.id}
-                className="border rounded-lg p-4 flex items-center justify-between"
-              >
-                <div>
-                  <p className="font-medium">{athlete.name}</p>
-                  <p className="text-sm text-gray-500">{athlete.email}</p>
-                  {latest ? (
-                    <p className="text-sm text-gray-500 mt-1">
-                      最新レポート:{" "}
-                      {new Date(latest.weekStart).toLocaleDateString("ja-JP")}{" "}
-                      {latest.submittedAt ? (
-                        <span className="text-green-600 font-medium">提出済み</span>
-                      ) : (
-                        <span className="text-yellow-600 font-medium">下書き</span>
-                      )}
-                    </p>
-                  ) : (
-                    <p className="text-sm text-gray-400 mt-1">レポートなし</p>
-                  )}
-                </div>
-                <div className="flex gap-3">
-                  {latest && (
-                    <Link
-                      href={`/coach/athletes/${athlete.id}/reports/${latest.id}`}
-                      className="text-sm text-blue-600 hover:underline"
+                  return (
+                    <div
+                      key={athlete.id}
+                      className="bg-white rounded-xl border border-zinc-200 shadow-sm p-5"
                     >
-                      レポートを見る →
-                    </Link>
-                  )}
-                  <Link
-                    href={`/coach/athletes/${athlete.id}/stats`}
-                    className="text-sm text-gray-500 hover:underline"
-                  >
-                    統計 →
-                  </Link>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </main>
+                      <div className="flex items-start gap-4">
+                        {/* Avatar */}
+                        <div className="h-10 w-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center font-semibold text-sm shrink-0">
+                          {initials}
+                        </div>
+
+                        {/* Info */}
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-zinc-900">{athlete.name}</p>
+                          <p className="text-xs text-zinc-400 truncate">{athlete.email}</p>
+
+                          {latest ? (
+                            <div className="flex items-center gap-2 mt-2">
+                              <span className="text-xs text-zinc-500">
+                                {formatWeekRange(latest.weekStart)}
+                              </span>
+                              <StatusBadge submitted={!!latest.submittedAt} />
+                            </div>
+                          ) : (
+                            <p className="text-xs text-zinc-400 mt-2">レポートなし</p>
+                          )}
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 shrink-0">
+                          {latest && (
+                            <Link
+                              href={`/coach/athletes/${athlete.id}/reports/${latest.id}`}
+                              className="text-sm font-medium text-primary hover:underline"
+                            >
+                              レポートを見る →
+                            </Link>
+                          )}
+                          <Link
+                            href={`/coach/athletes/${athlete.id}/stats`}
+                            className="text-sm text-zinc-400 hover:text-zinc-700 transition-colors"
+                          >
+                            統計 →
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+
+        </div>
+      </main>
+    </>
   );
+}
+
+function formatWeekRange(weekStart: Date): string {
+  const start = new Date(weekStart);
+  const end = new Date(weekStart);
+  end.setUTCDate(end.getUTCDate() + 6);
+  const y = start.getUTCFullYear();
+  const fmtShort = (d: Date) =>
+    `${String(d.getUTCMonth() + 1).padStart(2, "0")}/${String(d.getUTCDate()).padStart(2, "0")}`;
+  return `${y}/${fmtShort(start)} – ${fmtShort(end)}`;
 }

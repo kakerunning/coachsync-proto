@@ -432,6 +432,81 @@ npx prisma studio
 
 ---
 
+---
+
+## UI リデザイン (全画面)
+
+### ステータス: 実装完了 (Kakeru の動作確認待ち)
+
+---
+
+### 実装したファイルのリスト
+
+| ファイル | 内容 |
+|---|---|
+| `src/components/AppNav.tsx` | **新規** 共通ナビゲーションヘッダー (CoachSync ロゴ + ロールバッジ + ユーザー名 + ログアウト) |
+| `src/app/globals.css` | カラーパレット更新 (primary をブルー系に変更、accent・ring・background 調整) |
+| `src/app/layout.tsx` | メタデータ更新: タイトル「CoachSync」、日本語 description |
+| `src/app/athlete/page.tsx` | AppNav 組み込み、StatusBadge (インライン) に切替、`bg-zinc-50` レイアウト |
+| `src/app/coach/page.tsx` | AppNav 組み込み、StatusBadge、アスリートのイニシャルアバター追加 |
+| `src/app/athlete/reports/[id]/ReportEditor.tsx` | SectionHeader コンポーネント追加、StatusBadge (インライン)、inputCls 定数、shadcn Badge/Card 削除 |
+| `src/app/athlete/reports/[id]/page.tsx` | AppNav 組み込み、レイアウト・スタイル更新 |
+| `src/app/athlete/reports/[id]/view/page.tsx` | AppNav 組み込み、サブヘッダーバー追加、全体ビジュアルリデザイン |
+| `src/app/athlete/stats/page.tsx` | AppNav 組み込み、スタイル統一 |
+| `src/app/coach/athletes/[athleteId]/reports/[reportId]/ReportViewer.tsx` | 言語トグルをピル型 UI に変更、セッション日付を de-DE 曜日表示にフォーマット |
+| `src/app/coach/athletes/[athleteId]/reports/[reportId]/CommentSection.tsx` | スタイル更新 |
+| `src/app/coach/athletes/[athleteId]/reports/[reportId]/page.tsx` | AppNav 組み込み、StatusBadge、サブヘッダーバー追加 |
+| `src/app/coach/athletes/[athleteId]/stats/page.tsx` | AppNav 組み込み、スタイル統一 |
+
+---
+
+### 変更内容のサマリー
+
+**1. 共通ナビゲーション (`AppNav`)**
+- 全ページに sticky ヘッダーを追加
+- 左: CoachSync ロゴ + ロールバッジ (Athlete / Coach)
+- 右: ユーザー名 + ログアウトボタン
+- 旧来の各ページ内ヘッダー + ログアウトフォームを削除
+
+**2. カラーパレット**
+- `--primary`: 無彩色 → ブルー (`oklch(0.55 0.20 255)`)
+- `--accent`: ブルー系薄色に変更
+- `--ring`: ブルー系に変更
+- `--background`: わずかにグレー (`oklch(0.985 0 0)`)
+
+**3. StatusBadge**
+- shadcn `<Badge>` を廃止
+- 提出済み: エメラルド (`bg-emerald-50 text-emerald-700`)
+- 下書き: アンバー (`bg-amber-50 text-amber-700`)
+- インライン `<span>` で各ファイルに定義
+
+**4. コーチ用レポート閲覧 - 言語トグル**
+- ボタン並列 → ピル型セグメントコントロール (`border` + `p-0.5` ラッパー) に変更
+
+**5. メタデータ**
+- ブラウザタブタイトルが「Create Next App」から「CoachSync」に変更
+
+---
+
+### 動作確認手順
+
+1. `npm run dev` でサーバー起動
+2. アスリートアカウントでログイン → 全ページ上部に「CoachSync / Athlete」ヘッダーが表示されることを確認
+3. コーチアカウントでログイン → 全ページ上部に「CoachSync / Coach」ヘッダーが表示されることを確認
+4. アスリートダッシュボード (`/athlete`) でレポートのバッジが「提出済み」(緑) / 「下書き」(黄) で表示されることを確認
+5. コーチのレポート閲覧画面で言語トグルがピル型 UI で表示され、原文 / Deutsch の切替が動作することを確認
+6. ブラウザタブのタイトルが「CoachSync」になっていることを確認
+7. ログアウトボタンがヘッダー右上に表示され、クリックで `/login` に戻ることを確認
+
+---
+
+### 既知の制約・TODO
+
+- StatusBadge が各ファイルに重複定義されている (今後 `src/components/StatusBadge.tsx` に共通化可能だが現時点ではスコープ外)
+- スクリーンショットは Kakeru が動作確認時に取得してください
+
+---
+
 ## Prisma Studio メモ
 
 Prisma Studio はデフォルトで起動のたびにポートをランダムに選ぶため、前回と異なるポートになることがある。

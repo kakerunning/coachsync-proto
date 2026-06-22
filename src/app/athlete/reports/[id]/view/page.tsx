@@ -2,9 +2,22 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import { AppNav } from "@/components/AppNav";
 
 interface PageProps {
   params: Promise<{ id: string }>;
+}
+
+function StatusBadge({ submitted }: { submitted: boolean }) {
+  return submitted ? (
+    <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
+      提出済み
+    </span>
+  ) : (
+    <span className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20">
+      下書き
+    </span>
+  );
 }
 
 export default async function ReportViewPage({ params }: PageProps) {
@@ -39,134 +52,192 @@ export default async function ReportViewPage({ params }: PageProps) {
   const weekLabel = formatWeekRange(report.weekStart);
 
   return (
-    <main className="min-h-screen bg-background p-6 max-w-2xl mx-auto">
-      <div className="mb-6 flex items-center justify-between">
-        <Link
-          href="/athlete"
-          className="text-sm text-muted-foreground hover:underline"
-        >
-          ← ダッシュボードに戻る
-        </Link>
-        <Link
-          href={`/athlete/reports/${id}`}
-          className="text-sm text-primary hover:underline"
-        >
-          編集する →
-        </Link>
+    <>
+      <AppNav name={dbUser.name} role="ATHLETE" homeHref="/athlete" />
+      <div className="border-b border-zinc-100 bg-white">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 h-10 flex items-center justify-between">
+          <Link
+            href="/athlete"
+            className="text-sm text-zinc-500 hover:text-zinc-900 transition-colors"
+          >
+            ← ダッシュボード
+          </Link>
+          <Link
+            href={`/athlete/reports/${id}`}
+            className="text-sm text-zinc-500 hover:text-zinc-900 transition-colors"
+          >
+            編集する →
+          </Link>
+        </div>
       </div>
 
-      <div className="space-y-6">
-        <h1 className="text-xl font-bold">週次レポート {weekLabel}</h1>
+      <main className="min-h-screen bg-zinc-50">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-8">
 
-        {/* Training Sessions */}
-        {report.sessions.length > 0 && (
-          <div className="space-y-4">
-            <h2 className="text-sm font-medium">Training Sessions</h2>
-            {report.sessions.map((session) => {
-              const setIndices = [
-                ...new Set(session.results.map((r) => r.setIndex)),
-              ].sort((a, b) => a - b);
-
-              return (
-                <div key={session.id} className="rounded-xl border p-4 space-y-3">
-                  <h3 className="font-medium text-sm">
-                    {session.date.toISOString().substring(0, 10)}
-                  </h3>
-                  {session.menuText && (
-                    <pre className="whitespace-pre-wrap text-sm font-sans">
-                      {session.menuText}
-                    </pre>
-                  )}
-                  {setIndices.length > 0 && (
-                    <div className="space-y-3 border-t pt-3">
-                      <p className="text-xs font-medium text-muted-foreground">Results</p>
-                      {setIndices.map((setIndex) => {
-                        const setResults = session.results
-                          .filter((r) => r.setIndex === setIndex)
-                          .sort((a, b) => a.segmentIndex - b.segmentIndex);
-                        return (
-                          <div key={setIndex} className="space-y-1">
-                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                              Set {setIndex}
-                            </p>
-                            <table className="w-full text-sm">
-                              <thead>
-                                <tr className="text-xs text-muted-foreground">
-                                  <th className="text-left font-normal py-0.5 pr-3">Seg</th>
-                                  <th className="text-right font-normal py-0.5 pr-3">Distance</th>
-                                  <th className="text-right font-normal py-0.5 pr-3">Time</th>
-                                  <th className="text-center font-normal py-0.5 pr-3">DNF</th>
-                                  <th className="text-left font-normal py-0.5">Note</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {setResults.map((r) => (
-                                  <tr key={r.id} className="border-t border-border/40">
-                                    <td className="py-0.5 pr-3">{r.segmentIndex}</td>
-                                    <td className="py-0.5 pr-3 text-right">
-                                      {r.distanceM != null ? `${r.distanceM} m` : "—"}
-                                    </td>
-                                    <td className="py-0.5 pr-3 text-right">
-                                      {r.isDnf ? "DNF" : r.timeSec != null ? `${r.timeSec} s` : "—"}
-                                    </td>
-                                    <td className="py-0.5 pr-3 text-center">
-                                      {r.isDnf ? "✓" : ""}
-                                    </td>
-                                    <td className="py-0.5 text-muted-foreground">{r.note ?? ""}</td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+          {/* Report header */}
+          <div className="flex items-center gap-3">
+            <h1 className="text-xl font-bold text-zinc-900">
+              週次レポート {weekLabel}
+            </h1>
+            <StatusBadge submitted={!!report.submittedAt} />
           </div>
-        )}
 
-        {/* 週次リフレクション */}
-        <div className="space-y-2">
-          <h2 className="text-sm font-medium">週次リフレクション</h2>
-          {report.reflection ? (
-            <pre className="whitespace-pre-wrap text-sm font-sans">
-              {report.reflection}
-            </pre>
-          ) : (
-            <p className="text-sm text-muted-foreground">未記入</p>
+          {/* Training Sessions */}
+          {report.sessions.length > 0 && (
+            <section className="space-y-4">
+              <div className="flex items-center gap-3">
+                <h2 className="text-xs font-semibold uppercase tracking-widest text-zinc-400 whitespace-nowrap">
+                  Training Sessions
+                </h2>
+                <div className="flex-1 border-t border-zinc-200" />
+              </div>
+
+              {report.sessions.map((session) => {
+                const setIndices = [
+                  ...new Set(session.results.map((r) => r.setIndex)),
+                ].sort((a, b) => a - b);
+
+                return (
+                  <div
+                    key={session.id}
+                    className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden"
+                  >
+                    <div className="px-4 py-2.5 bg-zinc-50 border-b border-zinc-100">
+                      <h3 className="text-sm font-semibold text-zinc-800">
+                        {formatSessionDate(session.date)}
+                      </h3>
+                    </div>
+
+                    <div className="px-4 py-3 space-y-4">
+                      {session.menuText && (
+                        <pre className="whitespace-pre-wrap text-sm font-sans text-zinc-700 leading-relaxed">
+                          {session.menuText}
+                        </pre>
+                      )}
+
+                      {setIndices.length > 0 && (
+                        <div className="space-y-3 border-t border-zinc-100 pt-3">
+                          <p className="text-xs font-semibold uppercase tracking-widest text-zinc-400">
+                            Results
+                          </p>
+                          {setIndices.map((setIndex) => {
+                            const setResults = session.results
+                              .filter((r) => r.setIndex === setIndex)
+                              .sort((a, b) => a.segmentIndex - b.segmentIndex);
+                            return (
+                              <div key={setIndex} className="space-y-1">
+                                <p className="text-xs font-semibold text-zinc-500">
+                                  Set {setIndex}
+                                </p>
+                                <div className="overflow-x-auto">
+                                  <table className="w-full text-sm min-w-[340px]">
+                                    <thead>
+                                      <tr className="text-xs text-zinc-400 border-b border-zinc-100">
+                                        <th className="text-left font-medium py-1 pr-3">Seg</th>
+                                        <th className="text-right font-medium py-1 pr-3">Distance</th>
+                                        <th className="text-right font-medium py-1 pr-3">Time</th>
+                                        <th className="text-left font-medium py-1">Note</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {setResults.map((r) => (
+                                        <tr
+                                          key={r.id}
+                                          className="border-b border-zinc-50 last:border-0"
+                                        >
+                                          <td className="py-1.5 pr-3 text-zinc-500">
+                                            {r.segmentIndex}
+                                          </td>
+                                          <td className="py-1.5 pr-3 text-right tabular-nums text-zinc-800">
+                                            {r.distanceM != null ? `${r.distanceM} m` : "—"}
+                                          </td>
+                                          <td className="py-1.5 pr-3 text-right tabular-nums">
+                                            {r.isDnf ? (
+                                              <span className="text-red-500 font-medium text-xs">DNF</span>
+                                            ) : r.timeSec != null ? (
+                                              <span className="text-zinc-800">{r.timeSec.toFixed(2)} s</span>
+                                            ) : (
+                                              <span className="text-zinc-400">—</span>
+                                            )}
+                                          </td>
+                                          <td className="py-1.5 text-zinc-500 text-xs">
+                                            {r.note ?? ""}
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </section>
           )}
-        </div>
 
-        {/* コーチからのコメント */}
-        <div className="space-y-3 border-t pt-4">
-          <h2 className="text-sm font-medium">コーチからのコメント</h2>
-          {report.comments.length === 0 ? (
-            <p className="text-sm text-muted-foreground">まだコメントはありません</p>
-          ) : (
-            <ul className="space-y-3">
-              {report.comments.map((comment) => (
-                <li key={comment.id} className="rounded-xl border p-3 space-y-1">
-                  {comment.bodyJa ? (
-                    <p className="text-sm whitespace-pre-wrap">{comment.bodyJa}</p>
-                  ) : (
-                    <p className="text-sm whitespace-pre-wrap text-muted-foreground">
-                      {comment.body}
+          {/* Weekly Reflection */}
+          <section className="space-y-3">
+            <div className="flex items-center gap-3">
+              <h2 className="text-xs font-semibold uppercase tracking-widest text-zinc-400 whitespace-nowrap">
+                週次リフレクション
+              </h2>
+              <div className="flex-1 border-t border-zinc-200" />
+            </div>
+            <div className="bg-white rounded-xl border border-zinc-200 shadow-sm px-4 py-4">
+              {report.reflection ? (
+                <pre className="whitespace-pre-wrap text-sm font-sans text-zinc-700 leading-relaxed">
+                  {report.reflection}
+                </pre>
+              ) : (
+                <p className="text-sm text-zinc-400">未記入</p>
+              )}
+            </div>
+          </section>
+
+          {/* Coach comments */}
+          <section className="space-y-3">
+            <div className="flex items-center gap-3">
+              <h2 className="text-xs font-semibold uppercase tracking-widest text-zinc-400 whitespace-nowrap">
+                コーチからのコメント
+              </h2>
+              <div className="flex-1 border-t border-zinc-200" />
+            </div>
+            {report.comments.length === 0 ? (
+              <p className="text-sm text-zinc-400 py-2">まだコメントはありません</p>
+            ) : (
+              <div className="space-y-3">
+                {report.comments.map((comment) => (
+                  <div
+                    key={comment.id}
+                    className="bg-white rounded-xl border border-zinc-200 shadow-sm px-4 py-3 space-y-2"
+                  >
+                    {comment.bodyJa ? (
+                      <p className="text-sm text-zinc-800 whitespace-pre-wrap leading-relaxed">
+                        {comment.bodyJa}
+                      </p>
+                    ) : (
+                      <p className="text-sm text-zinc-500 whitespace-pre-wrap leading-relaxed">
+                        {comment.body}
+                      </p>
+                    )}
+                    <p className="text-xs text-zinc-400">
+                      {comment.author.name} ·{" "}
+                      {new Date(comment.createdAt).toLocaleDateString("ja-JP")}
                     </p>
-                  )}
-                  <p className="text-xs text-muted-foreground">
-                    {comment.author.name} ·{" "}
-                    {new Date(comment.createdAt).toLocaleDateString("ja-JP")}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
         </div>
-      </div>
-    </main>
+      </main>
+    </>
   );
 }
 
@@ -174,7 +245,17 @@ function formatWeekRange(weekStart: Date): string {
   const start = new Date(weekStart);
   const end = new Date(weekStart);
   end.setUTCDate(end.getUTCDate() + 6);
-  const fmt = (d: Date) =>
-    `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
-  return `${fmt(start)} - ${fmt(end)}`;
+  const y = start.getUTCFullYear();
+  const fmtShort = (d: Date) =>
+    `${String(d.getUTCMonth() + 1).padStart(2, "0")}/${String(d.getUTCDate()).padStart(2, "0")}`;
+  return `${y}/${fmtShort(start)} – ${fmtShort(end)}`;
+}
+
+function formatSessionDate(date: Date): string {
+  return date.toLocaleDateString("ja-JP", {
+    weekday: "short",
+    month: "numeric",
+    day: "numeric",
+    timeZone: "UTC",
+  });
 }

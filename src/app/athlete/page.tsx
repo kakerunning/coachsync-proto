@@ -2,16 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
-import { logout } from "@/lib/auth";
 import { getWeekStart } from "@/lib/api-auth";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from "@/components/ui/card";
+import { AppNav } from "@/components/AppNav";
 
 async function createThisWeekReport(athleteId: string) {
   "use server";
@@ -22,6 +15,18 @@ async function createThisWeekReport(athleteId: string) {
     create: { athleteId, weekStart, reflection: "" },
   });
   redirect(`/athlete/reports/${report.id}`);
+}
+
+function StatusBadge({ submitted }: { submitted: boolean }) {
+  return submitted ? (
+    <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
+      提出済み
+    </span>
+  ) : (
+    <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20">
+      下書き
+    </span>
+  );
 }
 
 export default async function AthleteDashboard() {
@@ -44,104 +49,94 @@ export default async function AthleteDashboard() {
       where: { athleteId: dbUser.id },
       orderBy: { weekStart: "desc" },
       take: 5,
-      select: {
-        id: true,
-        weekStart: true,
-        submittedAt: true,
-      },
+      select: { id: true, weekStart: true, submittedAt: true },
     }),
   ]);
 
   const createReport = createThisWeekReport.bind(null, dbUser.id);
 
   return (
-    <main className="min-h-screen bg-background p-6 max-w-2xl mx-auto">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-2xl font-bold">アスリートダッシュボード</h1>
-        <form action={logout}>
-          <Button variant="outline" size="sm" type="submit">
-            ログアウト
-          </Button>
-        </form>
-      </div>
+    <>
+      <AppNav name={dbUser.name} role="ATHLETE" homeHref="/athlete" />
+      <main className="min-h-screen bg-zinc-50">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-8">
 
-      <p className="text-muted-foreground mb-6">
-        Welcome, {dbUser.name} ({dbUser.role})
-      </p>
-
-      <div className="mb-6">
-        <Link href="/athlete/stats">
-          <Button variant="outline" size="sm">統計・グラフを見る →</Button>
-        </Link>
-      </div>
-
-      {/* 今週のレポート */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>今週のレポート</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {thisWeekReport ? (
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-muted-foreground">
-                  {formatWeekRange(thisWeekReport.weekStart)}
-                </span>
-                {thisWeekReport.submittedAt ? (
-                  <Badge>提出済み</Badge>
-                ) : (
-                  <Badge variant="secondary">下書き</Badge>
-                )}
-              </div>
-              <Link href={`/athlete/reports/${thisWeekReport.id}/view`}>
-                <Button size="sm">開く</Button>
-              </Link>
-            </div>
-          ) : (
-            <form action={createReport}>
-              <Button type="submit">今週のレポートを開始</Button>
-            </form>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* 過去のレポート */}
-      <Card>
-        <CardHeader>
-          <CardTitle>過去のレポート</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {pastReports.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              まだレポートがありません
+          {/* This week */}
+          <section>
+            <p className="text-xs font-semibold uppercase tracking-widest text-zinc-400 mb-3">
+              今週のトレーニング
             </p>
-          ) : (
-            <ul className="space-y-2">
-              {pastReports.map((r) => (
-                <li
-                  key={r.id}
-                  className="flex items-center justify-between py-2 border-b last:border-b-0"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm">{formatWeekRange(r.weekStart)}</span>
-                    {r.submittedAt ? (
-                      <Badge>提出済み</Badge>
-                    ) : (
-                      <Badge variant="secondary">下書き</Badge>
-                    )}
+            {thisWeekReport ? (
+              <div className="bg-white rounded-xl border border-zinc-200 shadow-sm p-5">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-2.5">
+                    <span className="font-semibold text-zinc-900">
+                      {formatWeekRange(thisWeekReport.weekStart)}
+                    </span>
+                    <StatusBadge submitted={!!thisWeekReport.submittedAt} />
                   </div>
-                  <Link href={`/athlete/reports/${r.id}/view`}>
-                    <Button variant="outline" size="sm">
-                      開く
-                    </Button>
+                  <Link href={`/athlete/reports/${thisWeekReport.id}/view`}>
+                    <Button size="sm">開く</Button>
                   </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
-    </main>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white rounded-xl border border-dashed border-zinc-300 p-8 text-center space-y-4">
+                <p className="text-sm text-zinc-500">今週のレポートがまだありません</p>
+                <form action={createReport}>
+                  <Button type="submit">今週のレポートを開始</Button>
+                </form>
+              </div>
+            )}
+          </section>
+
+          {/* Quick actions */}
+          <div>
+            <Link href="/athlete/stats">
+              <Button variant="outline" size="sm">
+                統計・グラフを見る →
+              </Button>
+            </Link>
+          </div>
+
+          {/* Past reports */}
+          <section>
+            <p className="text-xs font-semibold uppercase tracking-widest text-zinc-400 mb-3">
+              過去のレポート
+            </p>
+            {pastReports.length === 0 ? (
+              <p className="text-sm text-zinc-400 py-2">まだレポートがありません</p>
+            ) : (
+              <div className="bg-white rounded-xl border border-zinc-200 shadow-sm divide-y divide-zinc-100">
+                {pastReports.map((r) => (
+                  <div
+                    key={r.id}
+                    className="flex items-center justify-between px-5 py-3.5"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-sm text-zinc-800">
+                        {formatWeekRange(r.weekStart)}
+                      </span>
+                      <StatusBadge submitted={!!r.submittedAt} />
+                    </div>
+                    <Link href={`/athlete/reports/${r.id}/view`}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-zinc-500 hover:text-zinc-800"
+                      >
+                        開く →
+                      </Button>
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+        </div>
+      </main>
+    </>
   );
 }
 
@@ -149,7 +144,8 @@ function formatWeekRange(weekStart: Date): string {
   const start = new Date(weekStart);
   const end = new Date(weekStart);
   end.setUTCDate(end.getUTCDate() + 6);
-  const fmt = (d: Date) =>
-    `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
-  return `${fmt(start)} - ${fmt(end)}`;
+  const y = start.getUTCFullYear();
+  const fmtShort = (d: Date) =>
+    `${String(d.getUTCMonth() + 1).padStart(2, "0")}/${String(d.getUTCDate()).padStart(2, "0")}`;
+  return `${y}/${fmtShort(start)} – ${fmtShort(end)}`;
 }

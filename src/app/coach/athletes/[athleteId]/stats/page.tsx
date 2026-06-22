@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import StatsCharts from "@/components/StatsCharts";
+import { AppNav } from "@/components/AppNav";
 
 type Period = "4w" | "12w" | "all";
 
@@ -137,42 +138,46 @@ export default async function CoachAthleteStatsPage({
   };
 
   return (
-    <main className="min-h-screen bg-background p-6 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">統計・グラフ</h1>
-          <p className="text-sm text-muted-foreground mt-1">{athlete.name}</p>
-        </div>
-        <Link
-          href="/coach"
-          className="text-sm text-muted-foreground hover:underline"
-        >
-          ← ダッシュボード
-        </Link>
-      </div>
-
-      {/* 期間フィルタ */}
-      <div className="flex gap-2 mb-8">
-        {(["4w", "12w", "all"] as Period[]).map((p) => (
-          <Link
-            key={p}
-            href={`/coach/athletes/${athleteId}/stats?period=${p}`}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
-              period === p
-                ? "bg-foreground text-background border-foreground"
-                : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
-            }`}
-          >
-            {periodLabels[p]}
+    <>
+      <AppNav name={dbUser.name} role="COACH" homeHref="/coach" />
+      <div className="border-b border-zinc-100 bg-white">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 h-10 flex items-center">
+          <Link href="/coach" className="text-sm text-zinc-500 hover:text-zinc-900 transition-colors">
+            ← ダッシュボード
           </Link>
-        ))}
+        </div>
       </div>
+      <main className="min-h-screen bg-zinc-50">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+          <div>
+            <h1 className="text-xl font-bold text-zinc-900">統計・グラフ</h1>
+            <p className="text-sm text-zinc-500 mt-0.5">{athlete.name}</p>
+          </div>
 
-      <StatsCharts
-        timeTrendData={timeTrendData}
-        distances={distances}
-        volumeData={volumeData}
-      />
-    </main>
+          {/* Period filter */}
+          <div className="flex gap-2">
+            {(["4w", "12w", "all"] as Period[]).map((p) => (
+              <Link
+                key={p}
+                href={`/coach/athletes/${athleteId}/stats?period=${p}`}
+                className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+                  period === p
+                    ? "bg-zinc-900 text-white border-zinc-900"
+                    : "border-zinc-300 text-zinc-500 hover:border-zinc-600 hover:text-zinc-800"
+                }`}
+              >
+                {periodLabels[p]}
+              </Link>
+            ))}
+          </div>
+
+          <StatsCharts
+            timeTrendData={timeTrendData}
+            distances={distances}
+            volumeData={volumeData}
+          />
+        </div>
+      </main>
+    </>
   );
 }
