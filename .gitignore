@@ -46,3 +46,6 @@ next-env.d.ts
 /docs
 /CLAUDE.md
 /WORK_LOG.md
+/tsconfig.tsbuildinfo
+/skills
+prisma/migrations/
