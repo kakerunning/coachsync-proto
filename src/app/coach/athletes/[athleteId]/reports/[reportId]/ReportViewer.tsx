@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { t, type Lang } from "@/lib/translations";
 
 type Result = {
   id: string;
@@ -45,7 +46,8 @@ function formatSessionDate(date: string | Date): string {
   });
 }
 
-export function ReportViewer({ report }: { report: Report }) {
+export function ReportViewer({ report, lang }: { report: Report; lang: Lang }) {
+  const tr = t[lang];
   const [showDe, setShowDe] = useState(true);
 
   return (
@@ -53,7 +55,7 @@ export function ReportViewer({ report }: { report: Report }) {
       {/* Language toggle */}
       <div className="flex items-center gap-2">
         <span className="text-xs text-zinc-400 uppercase tracking-widest font-semibold mr-1">
-          言語
+          {tr.language}
         </span>
         <div className="inline-flex rounded-lg border border-zinc-200 bg-white p-0.5">
           <button
@@ -64,7 +66,7 @@ export function ReportViewer({ report }: { report: Report }) {
                 : "text-zinc-500 hover:text-zinc-800"
             }`}
           >
-            原文
+            {tr.original}
           </button>
           <button
             onClick={() => setShowDe(true)}
@@ -81,7 +83,7 @@ export function ReportViewer({ report }: { report: Report }) {
 
       {/* Training sessions */}
       {report.sessions.length === 0 ? (
-        <p className="text-sm text-zinc-400">セッションなし</p>
+        <p className="text-sm text-zinc-400">{tr.noSessions}</p>
       ) : (
         <div className="space-y-4">
           <div className="flex items-center gap-3">
@@ -107,7 +109,7 @@ export function ReportViewer({ report }: { report: Report }) {
                   </h3>
                   {showDe && !session.menuTextDe && session.menuText && (
                     <span className="text-xs text-amber-500 font-medium">
-                      翻訳未生成
+                      {tr.translationPending}
                     </span>
                   )}
                 </div>
@@ -185,14 +187,14 @@ export function ReportViewer({ report }: { report: Report }) {
       <div className="space-y-3">
         <div className="flex items-center gap-3">
           <h2 className="text-xs font-semibold uppercase tracking-widest text-zinc-400 whitespace-nowrap">
-            週次リフレクション
+            {tr.weeklyReflection}
           </h2>
           <div className="flex-1 border-t border-zinc-200" />
         </div>
         <div className="bg-white rounded-xl border border-zinc-200 shadow-sm px-4 py-4 space-y-2">
           {showDe && !report.reflectionDe && report.reflection && (
             <p className="text-xs text-amber-500 font-medium">
-              翻訳未生成 — 提出後に生成されます
+              {tr.translationPendingNote}
             </p>
           )}
           <pre className="whitespace-pre-wrap text-sm font-sans text-zinc-700 leading-relaxed">

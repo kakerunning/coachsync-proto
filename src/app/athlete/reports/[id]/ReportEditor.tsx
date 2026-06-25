@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
+import { t, type Lang } from "@/lib/translations";
 
 type SaveStatus = "idle" | "saving" | "saved";
 
@@ -25,6 +26,7 @@ interface SessionData {
 }
 
 interface Props {
+  lang: Lang;
   reportId: string;
   initialReflection: string;
   initialSubmittedAt: string | null;
@@ -57,14 +59,14 @@ function SectionHeader({ children }: { children: React.ReactNode }) {
   );
 }
 
-function StatusBadge({ submitted }: { submitted: boolean }) {
+function StatusBadge({ submitted, tr }: { submitted: boolean; tr: { submitted: string; draft: string } }) {
   return submitted ? (
     <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
-      提出済み
+      {tr.submitted}
     </span>
   ) : (
     <span className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20">
-      下書き
+      {tr.draft}
     </span>
   );
 }
@@ -73,6 +75,7 @@ const inputCls =
   "h-8 w-full rounded-md border border-zinc-200 bg-transparent px-2 text-sm outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/30 transition";
 
 export function ReportEditor({
+  lang,
   reportId,
   initialReflection,
   initialSubmittedAt,
@@ -80,6 +83,7 @@ export function ReportEditor({
   weekStart,
   initialSessions,
 }: Props) {
+  const tr = t[lang];
   const [reflection, setReflection] = useState(initialReflection);
   const [submittedAt, setSubmittedAt] = useState<string | null>(
     initialSubmittedAt
@@ -192,7 +196,7 @@ export function ReportEditor({
   }
 
   async function handleDeleteSession(sessionId: string) {
-    if (!window.confirm("このセッションを削除しますか？")) return;
+    if (!window.confirm(tr.deleteSessionConfirm)) return;
     const res = await fetch(`/api/sessions/${sessionId}`, { method: "DELETE" });
     if (res.ok || res.status === 204) {
       setSessions((prev) => prev.filter((s) => s.id !== sessionId));
@@ -376,13 +380,13 @@ export function ReportEditor({
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setSubmitError((data as { error?: string }).error ?? "提出に失敗しました");
+        setSubmitError((data as { error?: string }).error ?? tr.submitError);
         return;
       }
       const data = await res.json();
       setSubmittedAt(data.submittedAt);
     } catch {
-      setSubmitError("ネットワークエラーが発生しました");
+      setSubmitError(tr.networkError);
     }
   }
 
@@ -393,12 +397,12 @@ export function ReportEditor({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <h1 className="text-xl font-bold text-zinc-900">週次レポート {weekLabel}</h1>
-          <StatusBadge submitted={!!submittedAt} />
+          <h1 className="text-xl font-bold text-zinc-900">{tr.weeklyReport} {weekLabel}</h1>
+          <StatusBadge submitted={!!submittedAt} tr={tr} />
         </div>
         <span className="text-sm text-zinc-400 min-w-[80px] text-right">
-          {saveStatus === "saving" && "保存中..."}
-          {saveStatus === "saved" && "✓ 保存済み"}
+          {saveStatus === "saving" && tr.saving}
+          {saveStatus === "saved" && tr.saved}
         </span>
       </div>
 
@@ -431,7 +435,7 @@ export function ReportEditor({
                 <button
                   onClick={() => handleDeleteSession(session.id)}
                   className="text-zinc-400 hover:text-red-500 transition-colors p-1 rounded"
-                  aria-label="セッションを削除"
+                  aria-label={tr.deleteSessionConfirm}
                 >
                   <Trash2 size={15} />
                 </button>
@@ -448,7 +452,7 @@ export function ReportEditor({
                     handleSessionChange(session.id, "menuText", e.target.value)
                   }
                   rows={3}
-                  placeholder="メニューを入力 (例: 2× (200m–200m–400m))"
+                  placeholder={tr.menuPlaceholder}
                   className="resize-none text-sm"
                 />
               </div>
@@ -562,7 +566,7 @@ export function ReportEditor({
                                   handleDeleteResult(session.id, result.id)
                                 }
                                 className="flex items-center justify-center text-zinc-300 hover:text-red-400 transition-colors p-1"
-                                aria-label="削除"
+                                aria-label={tr.delete}
                               >
                                 <Trash2 size={13} />
                               </button>
@@ -575,7 +579,7 @@ export function ReportEditor({
                         onClick={() => handleAddSegment(session.id, setIndex)}
                         className="text-xs text-zinc-400 hover:text-primary transition-colors ml-6 py-0.5"
                       >
-                        + Segment を追加
+                        {tr.addSegment}
                       </button>
                     </div>
                   );
@@ -587,7 +591,7 @@ export function ReportEditor({
                   onClick={() => handleAddSet(session.id)}
                   className="text-xs h-7"
                 >
-                  + Set を追加
+                  {tr.addSet}
                 </Button>
               </div>
             </div>
@@ -600,18 +604,18 @@ export function ReportEditor({
           disabled={allDaysUsed}
           className="border-dashed w-full sm:w-auto"
         >
-          + 日付を追加
+          {tr.addDate}
         </Button>
       </section>
 
       {/* Weekly Reflection */}
       <section className="space-y-3">
-        <SectionHeader>週次リフレクション</SectionHeader>
+        <SectionHeader>{tr.weeklyReflection}</SectionHeader>
         <Textarea
           value={reflection}
           onChange={(e) => handleReflectionChange(e.target.value)}
           rows={10}
-          placeholder="今週のトレーニングについて記入してください..."
+          placeholder={tr.reflectionPlaceholder}
           className="resize-none"
         />
       </section>
@@ -621,32 +625,32 @@ export function ReportEditor({
         {confirmingSubmit ? (
           <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
             <span className="text-sm font-medium text-amber-800">
-              提出しますか？
+              {tr.confirmSubmitPrompt}
             </span>
             <div className="flex gap-2 ml-auto">
               <Button size="sm" onClick={handleSubmitConfirmed}>
-                提出する
+                {tr.submit}
               </Button>
               <Button
                 size="sm"
                 variant="outline"
                 onClick={() => setConfirmingSubmit(false)}
               >
-                キャンセル
+                {tr.cancel}
               </Button>
             </div>
           </div>
         ) : (
           <div className="flex items-center gap-3">
             <Button onClick={() => setConfirmingSubmit(true)}>
-              {submittedAt ? "再提出する" : "提出する"}
+              {submittedAt ? tr.resubmit : tr.submit}
             </Button>
             {submittedAt ? (
               <span className="text-xs text-emerald-600 font-medium">
-                提出済み ({new Date(submittedAt).toLocaleDateString("ja-JP")})
+                {tr.submitted} ({new Date(submittedAt).toLocaleDateString(tr.dateLocale)})
               </span>
             ) : (
-              <span className="text-xs text-zinc-400">提出後も編集できます</span>
+              <span className="text-xs text-zinc-400">{tr.canEditAfterSubmit}</span>
             )}
           </div>
         )}

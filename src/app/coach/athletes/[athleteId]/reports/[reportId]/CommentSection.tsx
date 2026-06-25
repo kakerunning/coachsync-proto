@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { t, type Lang } from "@/lib/translations";
 
 type Author = { id: string; name: string; role: string };
 
@@ -14,6 +15,7 @@ type CommentData = {
 };
 
 interface Props {
+  lang: Lang;
   reportId: string;
   coachId: string;
   initialComments: CommentData[];
@@ -22,7 +24,8 @@ interface Props {
 const textareaCls =
   "w-full rounded-lg border border-zinc-200 bg-transparent p-3 text-sm resize-none outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/30 transition placeholder:text-zinc-400";
 
-export function CommentSection({ reportId, coachId, initialComments }: Props) {
+export function CommentSection({ lang, reportId, coachId, initialComments }: Props) {
+  const tr = t[lang];
   const [comments, setComments] = useState<CommentData[]>(initialComments);
   const [newBody, setNewBody] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -41,7 +44,7 @@ export function CommentSection({ reportId, coachId, initialComments }: Props) {
     });
     setSubmitting(false);
     if (!res.ok) {
-      setError("コメントの送信に失敗しました");
+      setError(tr.commentSendError);
       return;
     }
     const created: CommentData = await res.json();
@@ -64,7 +67,7 @@ export function CommentSection({ reportId, coachId, initialComments }: Props) {
       body: JSON.stringify({ body: editBody }),
     });
     if (!res.ok) {
-      setError("編集に失敗しました");
+      setError(tr.commentEditError);
       return;
     }
     const updated: CommentData = await res.json();
@@ -73,11 +76,11 @@ export function CommentSection({ reportId, coachId, initialComments }: Props) {
   }
 
   async function handleDelete(commentId: string) {
-    if (!window.confirm("このコメントを削除しますか？")) return;
+    if (!window.confirm(tr.deleteCommentConfirm)) return;
     setError(null);
     const res = await fetch(`/api/comments/${commentId}`, { method: "DELETE" });
     if (!res.ok && res.status !== 204) {
-      setError("削除に失敗しました");
+      setError(tr.commentDeleteError);
       return;
     }
     setComments((prev) => prev.filter((c) => c.id !== commentId));
@@ -87,14 +90,14 @@ export function CommentSection({ reportId, coachId, initialComments }: Props) {
     <div className="space-y-4">
       <div className="flex items-center gap-3">
         <h2 className="text-xs font-semibold uppercase tracking-widest text-zinc-400 whitespace-nowrap">
-          コメント
+          {tr.comments}
         </h2>
         <div className="flex-1 border-t border-zinc-200" />
       </div>
 
       {/* Existing comments */}
       {comments.length === 0 ? (
-        <p className="text-sm text-zinc-400 py-2">まだコメントはありません</p>
+        <p className="text-sm text-zinc-400 py-2">{tr.noComments}</p>
       ) : (
         <div className="space-y-3">
           {comments.map((comment) => (
@@ -112,14 +115,14 @@ export function CommentSection({ reportId, coachId, initialComments }: Props) {
                   />
                   <div className="flex gap-2">
                     <Button size="sm" onClick={() => handleUpdate(comment.id)}>
-                      保存
+                      {tr.save}
                     </Button>
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => setEditingId(null)}
                     >
-                      キャンセル
+                      {tr.cancel}
                     </Button>
                   </div>
                 </div>
@@ -136,7 +139,7 @@ export function CommentSection({ reportId, coachId, initialComments }: Props) {
                   <div className="flex items-center justify-between pt-1">
                     <span className="text-xs text-zinc-400">
                       {comment.author.name} ·{" "}
-                      {new Date(comment.createdAt).toLocaleDateString("de-DE")}
+                      {new Date(comment.createdAt).toLocaleDateString(tr.dateLocale)}
                     </span>
                     {comment.author.id === coachId && (
                       <div className="flex gap-3">
@@ -144,13 +147,13 @@ export function CommentSection({ reportId, coachId, initialComments }: Props) {
                           onClick={() => startEdit(comment)}
                           className="text-xs text-zinc-400 hover:text-zinc-700 transition-colors"
                         >
-                          編集
+                          {tr.edit}
                         </button>
                         <button
                           onClick={() => handleDelete(comment.id)}
                           className="text-xs text-red-400 hover:text-red-600 transition-colors"
                         >
-                          削除
+                          {tr.delete}
                         </button>
                       </div>
                     )}
@@ -165,13 +168,13 @@ export function CommentSection({ reportId, coachId, initialComments }: Props) {
       {/* New comment input */}
       <div className="bg-white rounded-xl border border-zinc-200 shadow-sm p-4 space-y-3">
         <p className="text-xs font-semibold uppercase tracking-widest text-zinc-400">
-          新しいコメント
+          {tr.newComment}
         </p>
         <textarea
           value={newBody}
           onChange={(e) => setNewBody(e.target.value)}
           rows={4}
-          placeholder="コメントを入力 (ドイツ語 / 英語)"
+          placeholder={tr.commentPlaceholder}
           className={textareaCls}
         />
         {error && <p className="text-sm text-red-500">{error}</p>}
@@ -180,7 +183,7 @@ export function CommentSection({ reportId, coachId, initialComments }: Props) {
           disabled={submitting || !newBody.trim()}
           size="sm"
         >
-          {submitting ? "送信中..." : "コメントを送信"}
+          {submitting ? tr.sending : tr.sendComment}
         </Button>
       </div>
     </div>

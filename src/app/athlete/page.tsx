@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { getWeekStart } from "@/lib/api-auth";
+import { getLang } from "@/lib/get-lang";
+import { t, type Lang } from "@/lib/translations";
 import { Button } from "@/components/ui/button";
 import { AppNav } from "@/components/AppNav";
 
@@ -17,14 +19,14 @@ async function createThisWeekReport(athleteId: string) {
   redirect(`/athlete/reports/${report.id}`);
 }
 
-function StatusBadge({ submitted }: { submitted: boolean }) {
+function StatusBadge({ submitted, lang }: { submitted: boolean; lang: Lang }) {
   return submitted ? (
     <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
-      提出済み
+      {t[lang].submitted}
     </span>
   ) : (
     <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20">
-      下書き
+      {t[lang].draft}
     </span>
   );
 }
@@ -39,6 +41,8 @@ export default async function AthleteDashboard() {
   const dbUser = await prisma.user.findUnique({ where: { email: user.email! } });
   if (!dbUser || dbUser.role !== "ATHLETE") redirect("/login");
 
+  const lang = await getLang();
+  const tr = t[lang];
   const weekStart = getWeekStart();
 
   const [thisWeekReport, pastReports] = await Promise.all([
@@ -64,7 +68,7 @@ export default async function AthleteDashboard() {
           {/* This week */}
           <section>
             <p className="text-xs font-semibold uppercase tracking-widest text-zinc-400 mb-3">
-              今週のトレーニング
+              {tr.thisWeekTraining}
             </p>
             {thisWeekReport ? (
               <div className="bg-white rounded-xl border border-zinc-200 shadow-sm p-5">
@@ -73,18 +77,18 @@ export default async function AthleteDashboard() {
                     <span className="font-semibold text-zinc-900">
                       {formatWeekRange(thisWeekReport.weekStart)}
                     </span>
-                    <StatusBadge submitted={!!thisWeekReport.submittedAt} />
+                    <StatusBadge submitted={!!thisWeekReport.submittedAt} lang={lang} />
                   </div>
                   <Link href={`/athlete/reports/${thisWeekReport.id}/view`}>
-                    <Button size="sm">開く</Button>
+                    <Button size="sm">{tr.open}</Button>
                   </Link>
                 </div>
               </div>
             ) : (
               <div className="bg-white rounded-xl border border-dashed border-zinc-300 p-8 text-center space-y-4">
-                <p className="text-sm text-zinc-500">今週のレポートがまだありません</p>
+                <p className="text-sm text-zinc-500">{tr.noReportThisWeek}</p>
                 <form action={createReport}>
-                  <Button type="submit">今週のレポートを開始</Button>
+                  <Button type="submit">{tr.startReport}</Button>
                 </form>
               </div>
             )}
@@ -94,7 +98,7 @@ export default async function AthleteDashboard() {
           <div>
             <Link href="/athlete/stats">
               <Button variant="outline" size="sm">
-                統計・グラフを見る →
+                {tr.viewStats}
               </Button>
             </Link>
           </div>
@@ -102,10 +106,10 @@ export default async function AthleteDashboard() {
           {/* Past reports */}
           <section>
             <p className="text-xs font-semibold uppercase tracking-widest text-zinc-400 mb-3">
-              過去のレポート
+              {tr.pastReports}
             </p>
             {pastReports.length === 0 ? (
-              <p className="text-sm text-zinc-400 py-2">まだレポートがありません</p>
+              <p className="text-sm text-zinc-400 py-2">{tr.noReports}</p>
             ) : (
               <div className="bg-white rounded-xl border border-zinc-200 shadow-sm divide-y divide-zinc-100">
                 {pastReports.map((r) => (
@@ -117,7 +121,7 @@ export default async function AthleteDashboard() {
                       <span className="text-sm text-zinc-800">
                         {formatWeekRange(r.weekStart)}
                       </span>
-                      <StatusBadge submitted={!!r.submittedAt} />
+                      <StatusBadge submitted={!!r.submittedAt} lang={lang} />
                     </div>
                     <Link href={`/athlete/reports/${r.id}/view`}>
                       <Button
@@ -125,7 +129,7 @@ export default async function AthleteDashboard() {
                         size="sm"
                         className="text-zinc-500 hover:text-zinc-800"
                       >
-                        開く →
+                        {tr.openArrow}
                       </Button>
                     </Link>
                   </div>

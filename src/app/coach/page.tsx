@@ -2,16 +2,18 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import { getLang } from "@/lib/get-lang";
+import { t } from "@/lib/translations";
 import { AppNav } from "@/components/AppNav";
 
-function StatusBadge({ submitted }: { submitted: boolean }) {
+function StatusBadge({ submitted, tr }: { submitted: boolean; tr: { submitted: string; draft: string } }) {
   return submitted ? (
     <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
-      提出済み
+      {tr.submitted}
     </span>
   ) : (
     <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20">
-      下書き
+      {tr.draft}
     </span>
   );
 }
@@ -27,6 +29,9 @@ export default async function CoachDashboard() {
   const dbUser = await prisma.user.findUnique({ where: { email: user.email! } });
 
   if (!dbUser || dbUser.role !== "COACH") redirect("/login");
+
+  const lang = await getLang();
+  const tr = t[lang];
 
   const athletes = await prisma.user.findMany({
     where: { coachId: dbUser.id },
@@ -53,12 +58,12 @@ export default async function CoachDashboard() {
 
           <section>
             <p className="text-xs font-semibold uppercase tracking-widest text-zinc-400 mb-3">
-              担当アスリート
+              {tr.myAthletes}
             </p>
 
             {athletes.length === 0 ? (
               <div className="bg-white rounded-xl border border-dashed border-zinc-300 p-8 text-center">
-                <p className="text-sm text-zinc-400">担当アスリートがまだいません</p>
+                <p className="text-sm text-zinc-400">{tr.noAthletes}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -92,10 +97,10 @@ export default async function CoachDashboard() {
                               <span className="text-xs text-zinc-500">
                                 {formatWeekRange(latest.weekStart)}
                               </span>
-                              <StatusBadge submitted={!!latest.submittedAt} />
+                              <StatusBadge submitted={!!latest.submittedAt} tr={tr} />
                             </div>
                           ) : (
-                            <p className="text-xs text-zinc-400 mt-2">レポートなし</p>
+                            <p className="text-xs text-zinc-400 mt-2">{tr.noReport}</p>
                           )}
                         </div>
 
@@ -106,14 +111,14 @@ export default async function CoachDashboard() {
                               href={`/coach/athletes/${athlete.id}/reports/${latest.id}`}
                               className="text-sm font-medium text-primary hover:underline"
                             >
-                              レポートを見る →
+                              {tr.viewReport}
                             </Link>
                           )}
                           <Link
                             href={`/coach/athletes/${athlete.id}/stats`}
                             className="text-sm text-zinc-400 hover:text-zinc-700 transition-colors"
                           >
-                            統計 →
+                            {tr.statsArrow}
                           </Link>
                         </div>
                       </div>

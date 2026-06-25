@@ -1,5 +1,8 @@
 import Link from "next/link";
 import { logout } from "@/lib/auth";
+import { getLang } from "@/lib/get-lang";
+import { t } from "@/lib/translations";
+import { LangSwitcher } from "./LangSwitcher";
 
 interface Props {
   name: string;
@@ -7,7 +10,9 @@ interface Props {
   homeHref: string;
 }
 
-export function AppNav({ name, role, homeHref }: Props) {
+export async function AppNav({ name, role, homeHref }: Props) {
+  const lang = await getLang();
+
   return (
     <header className="sticky top-0 z-40 bg-white border-b border-zinc-200">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
@@ -17,6 +22,9 @@ export function AppNav({ name, role, homeHref }: Props) {
             {role === "ATHLETE" ? "Athlete" : "Coach"}
           </span>
         </Link>
+
+        <LangSwitcher current={lang} />
+
         <div className="flex items-center gap-3 sm:gap-4">
           <span className="hidden sm:block text-sm text-zinc-500 max-w-[160px] truncate">{name}</span>
           <form action={logout}>
@@ -24,7 +32,7 @@ export function AppNav({ name, role, homeHref }: Props) {
               type="submit"
               className="text-sm text-zinc-400 hover:text-zinc-700 transition-colors"
             >
-              ログアウト
+              {t[lang].logout}
             </button>
           </form>
         </div>

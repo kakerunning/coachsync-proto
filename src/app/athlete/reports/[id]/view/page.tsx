@@ -2,20 +2,22 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import { getLang } from "@/lib/get-lang";
+import { t } from "@/lib/translations";
 import { AppNav } from "@/components/AppNav";
 
 interface PageProps {
   params: Promise<{ id: string }>;
 }
 
-function StatusBadge({ submitted }: { submitted: boolean }) {
+function StatusBadge({ submitted, tr }: { submitted: boolean; tr: { submitted: string; draft: string } }) {
   return submitted ? (
     <span className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
-      提出済み
+      {tr.submitted}
     </span>
   ) : (
     <span className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-inset ring-amber-600/20">
-      下書き
+      {tr.draft}
     </span>
   );
 }
@@ -29,6 +31,9 @@ export default async function ReportViewPage({ params }: PageProps) {
 
   const dbUser = await prisma.user.findUnique({ where: { email: user.email! } });
   if (!dbUser || dbUser.role !== "ATHLETE") redirect("/login");
+
+  const lang = await getLang();
+  const tr = t[lang];
 
   const { id } = await params;
   const report = await prisma.weeklyReport.findUnique({
@@ -60,13 +65,13 @@ export default async function ReportViewPage({ params }: PageProps) {
             href="/athlete"
             className="text-sm text-zinc-500 hover:text-zinc-900 transition-colors"
           >
-            ← ダッシュボード
+            {tr.backToDashboard}
           </Link>
           <Link
             href={`/athlete/reports/${id}`}
             className="text-sm text-zinc-500 hover:text-zinc-900 transition-colors"
           >
-            編集する →
+            {tr.editMode}
           </Link>
         </div>
       </div>
@@ -77,9 +82,9 @@ export default async function ReportViewPage({ params }: PageProps) {
           {/* Report header */}
           <div className="flex items-center gap-3">
             <h1 className="text-xl font-bold text-zinc-900">
-              週次レポート {weekLabel}
+              {tr.weeklyReport} {weekLabel}
             </h1>
-            <StatusBadge submitted={!!report.submittedAt} />
+            <StatusBadge submitted={!!report.submittedAt} tr={tr} />
           </div>
 
           {/* Training Sessions */}
@@ -184,7 +189,7 @@ export default async function ReportViewPage({ params }: PageProps) {
           <section className="space-y-3">
             <div className="flex items-center gap-3">
               <h2 className="text-xs font-semibold uppercase tracking-widest text-zinc-400 whitespace-nowrap">
-                週次リフレクション
+                {tr.weeklyReflection}
               </h2>
               <div className="flex-1 border-t border-zinc-200" />
             </div>
@@ -194,7 +199,7 @@ export default async function ReportViewPage({ params }: PageProps) {
                   {report.reflection}
                 </pre>
               ) : (
-                <p className="text-sm text-zinc-400">未記入</p>
+                <p className="text-sm text-zinc-400">{tr.notFilled}</p>
               )}
             </div>
           </section>
@@ -203,12 +208,12 @@ export default async function ReportViewPage({ params }: PageProps) {
           <section className="space-y-3">
             <div className="flex items-center gap-3">
               <h2 className="text-xs font-semibold uppercase tracking-widest text-zinc-400 whitespace-nowrap">
-                コーチからのコメント
+                {tr.coachComments}
               </h2>
               <div className="flex-1 border-t border-zinc-200" />
             </div>
             {report.comments.length === 0 ? (
-              <p className="text-sm text-zinc-400 py-2">まだコメントはありません</p>
+              <p className="text-sm text-zinc-400 py-2">{tr.noComments}</p>
             ) : (
               <div className="space-y-3">
                 {report.comments.map((comment) => (
@@ -227,7 +232,7 @@ export default async function ReportViewPage({ params }: PageProps) {
                     )}
                     <p className="text-xs text-zinc-400">
                       {comment.author.name} ·{" "}
-                      {new Date(comment.createdAt).toLocaleDateString("ja-JP")}
+                      {new Date(comment.createdAt).toLocaleDateString(tr.dateLocale)}
                     </p>
                   </div>
                 ))}

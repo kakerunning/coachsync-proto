@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import { getLang } from "@/lib/get-lang";
+import { t } from "@/lib/translations";
 import { AppNav } from "@/components/AppNav";
 import { ReportEditor } from "./ReportEditor";
 
@@ -18,6 +20,9 @@ export default async function ReportEditPage({ params }: PageProps) {
 
   const dbUser = await prisma.user.findUnique({ where: { email: user.email! } });
   if (!dbUser || dbUser.role !== "ATHLETE") redirect("/login");
+
+  const lang = await getLang();
+  const tr = t[lang];
 
   const { id } = await params;
   const report = await prisma.weeklyReport.findUnique({
@@ -45,19 +50,20 @@ export default async function ReportEditPage({ params }: PageProps) {
             href="/athlete"
             className="text-sm text-zinc-500 hover:text-zinc-900 transition-colors"
           >
-            ← ダッシュボード
+            {tr.backToDashboard}
           </Link>
           <Link
             href={`/athlete/reports/${report.id}/view`}
             className="text-sm text-zinc-500 hover:text-zinc-900 transition-colors"
           >
-            閲覧モード →
+            {tr.viewMode}
           </Link>
         </div>
       </div>
       <main className="min-h-screen bg-zinc-50">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
           <ReportEditor
+            lang={lang}
             reportId={report.id}
             initialReflection={report.reflection}
             initialSubmittedAt={

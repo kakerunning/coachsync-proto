@@ -2,6 +2,8 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import { getLang } from "@/lib/get-lang";
+import { t } from "@/lib/translations";
 import StatsCharts from "@/components/StatsCharts";
 import { AppNav } from "@/components/AppNav";
 
@@ -36,9 +38,11 @@ export default async function CoachAthleteStatsPage({
   const dbUser = await prisma.user.findUnique({ where: { email: user.email! } });
   if (!dbUser || dbUser.role !== "COACH") redirect("/login");
 
+  const lang = await getLang();
+  const tr = t[lang];
+
   const { athleteId } = await params;
 
-  // 担当アスリートの確認
   const athlete = await prisma.user.findUnique({ where: { id: athleteId } });
   if (!athlete || athlete.coachId !== dbUser.id) return notFound();
 
@@ -55,7 +59,6 @@ export default async function CoachAthleteStatsPage({
     ...(periodStart ? { weekStart: { gte: periodStart } } : {}),
   };
 
-  // タイム推移用: DNF=false、timeSec/distanceM 必須
   const trendResults = await prisma.sessionResult.findMany({
     where: {
       isDnf: false,
@@ -73,7 +76,6 @@ export default async function CoachAthleteStatsPage({
     orderBy: { session: { report: { weekStart: "asc" } } },
   });
 
-  // ボリューム用: distanceM 必須 (DNF含む)
   const volumeResults = await prisma.sessionResult.findMany({
     where: {
       distanceM: { not: null },
@@ -87,7 +89,6 @@ export default async function CoachAthleteStatsPage({
     },
   });
 
-  // --- タイム推移データ処理 ---
   const byWeekDist = new Map<string, Map<number, number>>();
   for (const r of trendResults) {
     const weekKey = r.session.report.weekStart.toISOString();
@@ -104,7 +105,6 @@ export default async function CoachAthleteStatsPage({
   for (const r of trendResults) allDistances.add(r.distanceM!);
   const distances = Array.from(allDistances).sort((a, b) => a - b);
 
-  // --- ボリュームデータ処理 ---
   const weeklyVol = new Map<string, number>();
   for (const r of volumeResults) {
     const weekKey = r.session.report.weekStart.toISOString();
@@ -132,9 +132,9 @@ export default async function CoachAthleteStatsPage({
   }));
 
   const periodLabels: Record<Period, string> = {
-    "4w": "過去4週",
-    "12w": "過去12週",
-    all: "全期間",
+    "4w": tr.period4w,
+    "12w": tr.period12w,
+    all: tr.periodAll,
   };
 
   return (
@@ -143,14 +143,14 @@ export default async function CoachAthleteStatsPage({
       <div className="border-b border-zinc-100 bg-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-10 flex items-center">
           <Link href="/coach" className="text-sm text-zinc-500 hover:text-zinc-900 transition-colors">
-            ← ダッシュボード
+            {tr.backToDashboard}
           </Link>
         </div>
       </div>
       <main className="min-h-screen bg-zinc-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-6">
           <div>
-            <h1 className="text-xl font-bold text-zinc-900">統計・グラフ</h1>
+            <h1 className="text-xl font-bold text-zinc-900">{tr.statsTitle}</h1>
             <p className="text-sm text-zinc-500 mt-0.5">{athlete.name}</p>
           </div>
 

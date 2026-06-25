@@ -507,6 +507,88 @@ npx prisma studio
 
 ---
 
+---
+
+## 多言語対応 UI (ja / en / de)
+
+### ステータス: 実装完了 (Kakeru の動作確認待ち)
+
+---
+
+### 実装したファイルのリスト
+
+| ファイル | 内容 |
+|---|---|
+| `src/lib/translations.ts` | **新規** UI文字列の翻訳定義 (ja / en / de、全ページ分) |
+| `src/lib/get-lang.ts` | **新規** サーバー側でクッキー `cs_lang` を読み取る共通ヘルパー |
+| `src/components/LangSwitcher.tsx` | **新規** 言語切替ボタン Client Component (クッキー書込み + `router.refresh()`) |
+| `src/components/AppNav.tsx` | `LangSwitcher` 組み込み + ログアウト文言を翻訳対応 (async Server Component に変更) |
+| `src/app/athlete/page.tsx` | `getLang()` + `t[lang]` で全UI文字列を翻訳対応 |
+| `src/app/athlete/reports/[id]/page.tsx` | `getLang()` + `lang` を `ReportEditor` に渡す |
+| `src/app/athlete/reports/[id]/ReportEditor.tsx` | `lang` prop 追加、全UI文字列を翻訳対応 |
+| `src/app/athlete/reports/[id]/view/page.tsx` | `getLang()` + `t[lang]` で全UI文字列を翻訳対応 |
+| `src/app/athlete/stats/page.tsx` | `getLang()` + 期間ラベルを翻訳対応 |
+| `src/app/coach/page.tsx` | `getLang()` + `t[lang]` で全UI文字列を翻訳対応 |
+| `src/app/coach/athletes/[athleteId]/reports/[reportId]/page.tsx` | `getLang()` + `lang` を `ReportViewer`・`CommentSection` に渡す |
+| `src/app/coach/athletes/[athleteId]/reports/[reportId]/ReportViewer.tsx` | `lang` prop 追加、全UI文字列を翻訳対応 |
+| `src/app/coach/athletes/[athleteId]/reports/[reportId]/CommentSection.tsx` | `lang` prop 追加、全UI文字列を翻訳対応 |
+| `src/app/coach/athletes/[athleteId]/stats/page.tsx` | `getLang()` + 期間ラベルを翻訳対応 |
+
+---
+
+### 実装内容のサマリー
+
+**アーキテクチャ: クッキーベース**
+- `LangSwitcher` ボタンを押すと `cs_lang` クッキー (max-age 1年) をセットし `router.refresh()` を呼ぶ
+- サーバーコンポーネントはリクエスト時に `getLang()` でクッキーを読んで言語を決定
+- クライアントコンポーネント (`ReportEditor`, `ReportViewer`, `CommentSection`) は親サーバーコンポーネントから `lang` を prop で受け取る
+- デフォルト言語は `ja` (クッキー未設定時)
+
+**言語切替ボタン (AppNav に常時表示)**
+- 3ボタン構成: `日本語` / `English` / `Deutsch`
+- ランディングページと同じデザイン (ピル型セグメントコントロール)
+- 選択中のボタンは白背景 + shadow でハイライト
+
+**翻訳対象**
+- ナビゲーション (ログアウト、← ダッシュボード 等)
+- ステータスバッジ (提出済み / 下書き)
+- ダッシュボード見出し・ボタン・空状態メッセージ
+- レポートエディタ全体 (保存状態、確認ダイアログ、プレースホルダー 等)
+- 統計ページ・期間フィルタラベル
+- コーチ用コメントセクション全体
+
+---
+
+### `package.json` ビルドスクリプト修正
+
+Vercel デプロイ時に Prisma Client 未生成でビルドが失敗する問題を合わせて修正:
+
+```json
+"build": "prisma generate && next build"
+```
+
+---
+
+### 動作確認手順
+
+1. `npm run dev` でサーバー起動
+2. アスリートまたはコーチアカウントでログイン
+3. ナビバー中央に「日本語 / English / Deutsch」ボタンが表示されることを確認
+4. 「English」を押す → ページ内の全UI文字列 (ダッシュボード見出し、ボタン、バッジ 等) が英語に切り替わることを確認
+5. 別ページへ遷移しても言語設定が維持されることを確認
+6. 「Deutsch」を押す → ドイツ語に切り替わることを確認
+7. ブラウザを再起動 (またはタブを閉じて再度開く) → 言語設定がクッキーにより保持されていることを確認
+8. コーチ側レポート閲覧画面で `CommentSection` の「コメントを送信」ボタンが翻訳されることを確認
+
+---
+
+### 既知の制約・TODO
+
+- ランディングページ (`/`) の言語切替は独立した `useState` のままで、アプリ内のクッキー設定とは連動していない
+- スクリーンショットは Kakeru が動作確認時に取得してください
+
+---
+
 ## Prisma Studio メモ
 
 Prisma Studio はデフォルトで起動のたびにポートをランダムに選ぶため、前回と異なるポートになることがある。
