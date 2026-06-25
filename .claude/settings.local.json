@@ -37,7 +37,9 @@
       "Bash(git diff src/app/athlete/reports/[id]/ReportEditor.tsx | head -80)",
       "Bash(git diff src/app/coach/athletes/[athleteId]/reports/[reportId]/ReportViewer.tsx | head -100)",
       "Bash(git diff src/app/coach/athletes/[athleteId]/reports/[reportId]/page.tsx | head -60)",
-      "Bash(git diff src/app/athlete/reports/[id]/view/page.tsx | head -80)"
+      "Bash(git diff src/app/athlete/reports/[id]/view/page.tsx | head -80)",
+      "Bash(git -C /home/eightcloud/coachsync-proto submodule status 2>&1)",
+      "Bash(git -C /home/eightcloud/coachsync-proto ls-files --error-unmatch skills 2>&1)"
     ]
   }
 }
