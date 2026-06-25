@@ -48,4 +48,21 @@ next-env.d.ts
 /WORK_LOG.md
 /tsconfig.tsbuildinfo
 /skills
-prisma/migrations/
+
+# OS
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Prisma generated (already have /src/generated/prisma)
+*.db
+*.db-journal
+
+# Test artifacts
+/test-results/
+/playwright-report/
+/playwright/.cache/
