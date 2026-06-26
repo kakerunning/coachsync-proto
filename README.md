@@ -165,9 +165,24 @@ Training session entry with results (sets/segments/times)\
 <img width="814" height="354" alt="Screenshot 2026-06-26 140915" src="https://github.com/user-attachments/assets/52727b58-49b5-4868-b2e8-52707938884f" />\
 
 - Athlete Account side\
-<img width="760" height="254" alt="Screenshot 2026-06-26 140949" src="https://github.com/user-attachments/assets/a2f683a9-e954-418a-bd7c-a1a94151b6d2" />\
+<img width="878" height="190" alt="Screenshot 2026-06-26 145842" src="https://github.com/user-attachments/assets/d7fd1ac6-5ce3-4a5a-b2b0-55caa29a995f" />\
 -> The comment is also automatically translated from German to Japanese with DeepL API in the athlete account
 ---
+
+## Roadmap
+The initial function of this project is to optimize communication between a coach and an athlete, but there are some functions to be added to the project.
+[ ] calendar views - help a coach and an athlete organize an athlete's peaking 
+- to trace a training program per day
+- to add schedules of their competitions, training camps, vacations, and so on.
+
+[ ] speed curve visualization - help a coach and an athlete manage their performance while their training 
+- to show how an athlete maintains their speed per set or segment
+- to detect if it is over pace or too easy pace
+
+[ ] Personal/Season Best view
+- to manage peaking in the season
+- to show the progress of the season
+- to compare performances in each competition
 
 ## License
 
