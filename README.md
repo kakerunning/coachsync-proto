@@ -171,15 +171,15 @@ Training session entry with results (sets/segments/times)\
 
 ## Roadmap
 The initial function of this project is to optimize communication between a coach and an athlete, but there are some functions to be added to the project.
-[ ] calendar views - help a coach and an athlete organize an athlete's peaking 
+- [ ] calendar views - help a coach and an athlete organize an athlete's peaking 
 - to trace a training program per day
 - to add schedules of their competitions, training camps, vacations, and so on.
 
-[ ] speed curve visualization - help a coach and an athlete manage their performance while their training 
+- [ ] speed curve visualization - help a coach and an athlete manage their performance while their training 
 - to show how an athlete maintains their speed per set or segment
 - to detect if it is over pace or too easy pace
 
-[ ] Personal/Season Best view
+- [ ] Personal/Season Best view
 - to manage peaking in the season
 - to show the progress of the season
 - to compare performances in each competition
