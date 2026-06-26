@@ -12,6 +12,7 @@ import {
   Bar,
   ResponsiveContainer,
 } from "recharts";
+import { t, type Lang } from "@/lib/translations";
 
 const LINE_COLORS = [
   "#3b82f6",
@@ -38,24 +39,25 @@ interface StatsChartsProps {
   timeTrendData: TimeTrendRow[];
   distances: number[];
   volumeData: VolumeRow[];
+  lang: Lang;
 }
 
 export default function StatsCharts({
   timeTrendData,
   distances,
   volumeData,
+  lang,
 }: StatsChartsProps) {
+  const tr = t[lang];
   const hasTimeTrend = timeTrendData.length > 0 && distances.length > 0;
   const hasVolume = volumeData.some((r) => r.volume > 0);
 
   return (
     <div className="space-y-10">
-      {/* 距離別タイム推移 */}
+      {/* Time trend by distance */}
       <section>
-        <h2 className="text-lg font-semibold mb-1">距離別ベストタイム推移</h2>
-        <p className="text-sm text-muted-foreground mb-4">
-          週ごとの各距離ベストタイム（値が低いほど良い）
-        </p>
+        <h2 className="text-lg font-semibold mb-1">{tr.timeTrendTitle}</h2>
+        <p className="text-sm text-muted-foreground mb-4">{tr.timeTrendDesc}</p>
         {hasTimeTrend ? (
           <ResponsiveContainer width="100%" height={320}>
             <LineChart data={timeTrendData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
@@ -68,7 +70,7 @@ export default function StatsCharts({
               />
               <Tooltip
                 formatter={(value) => [formatTimeSec(Number(value)), ""]}
-                labelFormatter={(label) => `週: ${label}`}
+                labelFormatter={(label) => `${tr.weekLabel} ${label}`}
               />
               <Legend />
               {distances.map((dist, i) => (
@@ -86,17 +88,15 @@ export default function StatsCharts({
           </ResponsiveContainer>
         ) : (
           <p className="text-sm text-muted-foreground py-8 text-center">
-            この期間にタイム記録がありません
+            {tr.noTimeTrend}
           </p>
         )}
       </section>
 
-      {/* 週次ボリューム */}
+      {/* Weekly volume */}
       <section>
-        <h2 className="text-lg font-semibold mb-1">週次走行距離</h2>
-        <p className="text-sm text-muted-foreground mb-4">
-          週ごとの合計走行距離（DNF含む）
-        </p>
+        <h2 className="text-lg font-semibold mb-1">{tr.weeklyVolumeTitle}</h2>
+        <p className="text-sm text-muted-foreground mb-4">{tr.weeklyVolumeDesc}</p>
         {hasVolume ? (
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={volumeData} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
@@ -108,15 +108,15 @@ export default function StatsCharts({
                 width={52}
               />
               <Tooltip
-                formatter={(value) => [`${Number(value)}m`, "走行距離"]}
-                labelFormatter={(label) => `週: ${label}`}
+                formatter={(value) => [`${Number(value)}m`, tr.distanceLabel]}
+                labelFormatter={(label) => `${tr.weekLabel} ${label}`}
               />
-              <Bar dataKey="volume" name="走行距離" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="volume" name={tr.distanceLabel} fill="#3b82f6" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         ) : (
           <p className="text-sm text-muted-foreground py-8 text-center">
-            この期間に距離記録がありません
+            {tr.noVolume}
           </p>
         )}
       </section>

@@ -175,6 +175,7 @@ export default async function CoachAthleteStatsPage({
             timeTrendData={timeTrendData}
             distances={distances}
             volumeData={volumeData}
+            lang={lang}
           />
         </div>
       </main>
