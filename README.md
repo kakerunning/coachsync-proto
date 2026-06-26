@@ -143,6 +143,30 @@ src/
 
 🔗 https://coachsync-proto-86bl.vercel.app/
 
+**1. Athlete session entry**
+Training session entry with results (sets/segments/times)\
+<img width="846" height="946" alt="Screenshot 2026-06-26 134346" src="https://github.com/user-attachments/assets/8cd659e9-ce6c-4170-a79d-9947e8284fd8" />
+
+**2. Weekly feedback submitted**
+<img width="882" height="942" alt="Screenshot 2026-06-26 134359" src="https://github.com/user-attachments/assets/e90fa41c-3c23-42f9-bd85-2e4a8acf17d0" />
+<img width="782" height="144" alt="Screenshot 2026-06-26 134415" src="https://github.com/user-attachments/assets/e5570263-f7f4-46f6-80ac-2341d759278f" />
+
+**3. Coach dashboard with athlete list**
+<img width="782" height="386" alt="Screenshot 2026-06-26 140443" src="https://github.com/user-attachments/assets/3682369d-3dc1-4564-908c-674976821223" />
+
+**4. Coach report view**\
+<img width="764" height="858" alt="Screenshot 2026-06-26 140528" src="https://github.com/user-attachments/assets/91465c73-e5c9-4696-83f9-f5e6473344b6" />
+<img width="744" height="880" alt="Screenshot 2026-06-26 140549" src="https://github.com/user-attachments/assets/28308df6-f6e1-4e53-9802-a6f161ae681f" />\
+-> The feedback is automatically translated to German with DeepL API
+
+**5. Coach comment**
+
+- Coach Account side\
+<img width="814" height="354" alt="Screenshot 2026-06-26 140915" src="https://github.com/user-attachments/assets/52727b58-49b5-4868-b2e8-52707938884f" />\
+
+- Athlete Account side\
+<img width="760" height="254" alt="Screenshot 2026-06-26 140949" src="https://github.com/user-attachments/assets/a2f683a9-e954-418a-bd7c-a1a94151b6d2" />\
+-> The comment is also automatically translated from German to Japanese with DeepL API in the athlete account
 ---
 
 ## License
