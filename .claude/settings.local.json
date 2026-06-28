@@ -39,7 +39,17 @@
       "Bash(git diff src/app/coach/athletes/[athleteId]/reports/[reportId]/page.tsx | head -60)",
       "Bash(git diff src/app/athlete/reports/[id]/view/page.tsx | head -80)",
       "Bash(git -C /home/eightcloud/coachsync-proto submodule status 2>&1)",
-      "Bash(git -C /home/eightcloud/coachsync-proto ls-files --error-unmatch skills 2>&1)"
+      "Bash(git -C /home/eightcloud/coachsync-proto ls-files --error-unmatch skills 2>&1)",
+      "Bash(git -C /home/eightcloud/coachsync-proto rm --cached WORK_LOG.md CLAUDE.md 2>&1)",
+      "Bash(git -C /home/eightcloud/coachsync-proto status 2>&1)",
+      "Bash(git -C /home/eightcloud/coachsync-proto commit -m \"$\\(cat <<'EOF'\nStop tracking WORK_LOG.md and CLAUDE.md \\(added to .gitignore\\)\n\nCo-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(node --version && npm --version && which node && which npm)",
+      "Bash(command -v nvm)",
+      "Read(//home/eightcloud/**)",
+      "Bash(ls /home/eightcloud/coachsync-proto/.env* 2>/dev/null || echo \"no .env files found\")",
+      "Bash(which tsx bun ts-node node 2>/dev/null && node --version && bun --version 2>/dev/null || true)",
+      "Bash(npx tsx --version 2>&1 | head -5)",
+      "Bash(npx tsx prisma/seed.ts 2>&1)"
     ]
   }
 }

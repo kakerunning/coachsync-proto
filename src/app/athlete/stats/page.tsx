@@ -52,7 +52,7 @@ export default async function AthleteStatsPage({
     ...(periodStart ? { weekStart: { gte: periodStart } } : {}),
   };
 
-  const trendResults = await prisma.sessionResult.findMany({
+  const speedResults = await prisma.sessionResult.findMany({
     where: {
       isDnf: false,
       timeSec: { not: null },
@@ -82,21 +82,13 @@ export default async function AthleteStatsPage({
     },
   });
 
-  const byWeekDist = new Map<string, Map<number, number>>();
-  for (const r of trendResults) {
+  const weeklySpeedMap = new Map<string, { sum: number; count: number }>();
+  for (const r of speedResults) {
     const weekKey = r.session.report.weekStart.toISOString();
-    const dist = r.distanceM!;
-    const time = r.timeSec!;
-    if (!byWeekDist.has(weekKey)) byWeekDist.set(weekKey, new Map());
-    const distMap = byWeekDist.get(weekKey)!;
-    if (!distMap.has(dist) || time < distMap.get(dist)!) {
-      distMap.set(dist, time);
-    }
+    const speed = r.distanceM! / r.timeSec!;
+    const cur = weeklySpeedMap.get(weekKey) ?? { sum: 0, count: 0 };
+    weeklySpeedMap.set(weekKey, { sum: cur.sum + speed, count: cur.count + 1 });
   }
-
-  const allDistances = new Set<number>();
-  for (const r of trendResults) allDistances.add(r.distanceM!);
-  const distances = Array.from(allDistances).sort((a, b) => a - b);
 
   const weeklyVol = new Map<string, number>();
   for (const r of volumeResults) {
@@ -105,19 +97,18 @@ export default async function AthleteStatsPage({
   }
 
   const allWeekKeys = Array.from(
-    new Set([...byWeekDist.keys(), ...weeklyVol.keys()])
+    new Set([...weeklySpeedMap.keys(), ...weeklyVol.keys()])
   ).sort();
 
-  const timeTrendData = allWeekKeys.map((weekKey) => {
-    const distMap = byWeekDist.get(weekKey) ?? new Map();
-    const label = formatWeekLabel(new Date(weekKey));
-    const row: Record<string, string | number> = { week: label };
-    for (const dist of distances) {
-      const best = distMap.get(dist);
-      if (best !== undefined) row[`${dist}m`] = best;
-    }
-    return row;
-  });
+  const avgSpeedData = allWeekKeys
+    .filter((weekKey) => weeklySpeedMap.has(weekKey))
+    .map((weekKey) => {
+      const entry = weeklySpeedMap.get(weekKey)!;
+      return {
+        week: formatWeekLabel(new Date(weekKey)),
+        speed: parseFloat((entry.sum / entry.count).toFixed(3)),
+      };
+    });
 
   const volumeData = allWeekKeys.map((weekKey) => ({
     week: formatWeekLabel(new Date(weekKey)),
@@ -162,8 +153,7 @@ export default async function AthleteStatsPage({
           </div>
 
           <StatsCharts
-            timeTrendData={timeTrendData}
-            distances={distances}
+            avgSpeedData={avgSpeedData}
             volumeData={volumeData}
             lang={lang}
           />

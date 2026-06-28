@@ -26,7 +26,7 @@ My coach communicates in German, and I communicate in English with a Japanese ac
 - **Structured training data** — log sets, segments, distances, times, DNF flags, and notes per session
 - **Weekly reflection** — free-text summary submitted alongside sessions
 - **Report history** — view past submissions with submitted / draft status badges
-- **Performance stats** — time trend charts by distance and weekly volume bar charts
+- **Performance stats** — weekly average speed trend (m/s) and weekly volume bar charts
 
 ### For Coaches
 - **Bilingual report viewer** — toggle between original text and German translation per report
@@ -107,11 +107,27 @@ cp .env.example .env
 # Run DB migrations
 npx prisma migrate deploy
 
+# (Optional) Seed demo data
+# Add SUPABASE_SERVICE_ROLE_KEY to .env first to also create Supabase Auth users,
+# otherwise only the Prisma DB records are created and auth users must be added manually.
+npx tsx prisma/seed.ts
+
 # Start dev server
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
+
+### Demo accounts (created by the seed script)
+
+| Role | Name | Email | Language | Password |
+|---|---|---|---|---|
+| Coach | Thomas Müller | thomas.mueller@coach.de | German | Demo1234! |
+| Athlete | Sarah Johnson | sarah.johnson@athlete.com | English | Demo1234! |
+| Athlete | 田中 健太 | kenta.tanaka@athlete.jp | Japanese | Demo1234! |
+| Athlete | Max Weber | max.weber@athlete.de | German | Demo1234! |
+
+The seed script is idempotent — running it multiple times is safe. It creates 4 weeks of training data (June 1–22, 2026) per athlete, with structured session results, weekly reflections, and coach comments in each athlete's native language.
 
 ---
 
